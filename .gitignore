@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploads and audio cache (user data, not source code)
+/uploads
+/public/audio-cache
+
+# keep the .env.example but not .env
+!.env.example
+next-env.d.ts
