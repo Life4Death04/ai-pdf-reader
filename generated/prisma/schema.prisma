@@ -1,0 +1,109 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum ProcessingMode {
+  FULL_TEXT // Raw extracted text sent to TTS
+  SUMMARY // AI-shortened version
+  PODCAST // AI-rewritten conversational style
+}
+
+enum DocumentStatus {
+  UPLOADED // File stored, not yet processed
+  EXTRACTING // PDF text extraction in progress
+  CHUNKING // Splitting into TTS chunks
+  READY // Fully processed, playable
+  ERROR // Something went wrong
+}
+
+// ─────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  isPremium Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents        Document[]
+  playbackProgress PlaybackProgress[]
+
+  @@map("users")
+}
+
+model Document {
+  id            String         @id @default(cuid())
+  title         String
+  fileName      String // original filename
+  fileUrl       String // path on disk or object storage URL
+  fileSize      Int? // bytes
+  pageCount     Int?
+  extractedText String?        @db.Text
+  status        DocumentStatus @default(UPLOADED)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  chunks           TextChunk[]
+  playbackProgress PlaybackProgress[]
+
+  @@map("documents")
+}
+
+// Each chunk is a segment of text (500–1200 tokens) ready for TTS.
+// Storing chunks in DB lets us:
+//   1. Resume from exact chunk position
+//   2. Cache audio per chunk + mode (avoid re-running Piper)
+//   3. Know which chunks have been AI-processed
+model TextChunk {
+  id         String         @id @default(cuid())
+  index      Int // 0-based order within document
+  text       String         @db.Text // original extracted text for this chunk
+  tokenCount Int?
+  mode       ProcessingMode @default(FULL_TEXT)
+  processed  String?        @db.Text // AI-rewritten text (null = not yet processed)
+  audioPath  String? // path to cached .wav file on disk
+  createdAt  DateTime       @default(now())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, index, mode]) // one cached audio per (doc, chunk, mode)
+  @@map("text_chunks")
+}
+
+// Stores where the user stopped listening.
+// Free users: this table is unused — they use localStorage.
+// Premium users: this table is used — enables cross-device resume.
+model PlaybackProgress {
+  id         String         @id @default(cuid())
+  time       Float // seconds into the full audio
+  chunkIndex Int            @default(0) // which chunk was playing
+  mode       ProcessingMode @default(FULL_TEXT)
+  updatedAt  DateTime       @updatedAt
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId]) // one progress record per (user, document)
+  @@map("playback_progress")
+}

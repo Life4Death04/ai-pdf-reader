@@ -45,5 +45,5 @@ next-env.d.ts
 /public/audio-cache
 
 # keep the .env.example but not .env
-!.env.example
+.env.example
 next-env.d.ts
