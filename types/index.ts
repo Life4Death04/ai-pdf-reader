@@ -1,9 +1,9 @@
-import type { Document, TextChunk, PlaybackProgress } from "@prisma/client";
+import type { Document, TextChunk, PlaybackProgress } from "../generated/prisma";
 
 // ─────────────────────────────────────────────
 // Re-export Prisma enums for use across the app
 // ─────────────────────────────────────────────
-export { ProcessingMode, DocumentStatus } from "@prisma/client";
+export { ProcessingMode, DocumentStatus } from "../generated/prisma";
 
 // ─────────────────────────────────────────────
 // Extended types (Prisma model + relations)
