@@ -119,12 +119,86 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring) / 0.5);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--surface-dim);
+    color: var(--color-on-surface);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   AURALIS - Custom Design System
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+:root {
+  /* Surface Layers */
+  --surface-dim: #060e20;
+  --surface: #091328;
+  --surface-container-low: #0f1930;
+  --surface-container: #141f38;
+  --surface-container-high: #1a2540;
+  --surface-container-highest: #1f2b49;
+  --surface-bright: #293552;
+  --surface-variant: #3a4562;
+  
+  /* Electric Indigo */
+  --color-primary: #a3a6ff;
+  --color-primary-dim: #6063ee;
+  --color-on-primary: #000814;
+  
+  /* Sonic Green */
+  --color-secondary: #69f6b8;
+  --color-on-secondary: #001a10;
+  
+  /* Text */
+  --color-on-surface: #dee5ff;
+  --color-on-surface-variant: #9ba7c8;
+  --color-outline-variant: #2a3648;
+}
+
+@layer utilities {
+  .primary-gradient {
+    background: linear-gradient(135deg, #a3a6ff 0%, #6063ee 100%);
+  }
+  
+  .glass-surface {
+    background: rgba(58, 69, 98, 0.6);
+    backdrop-filter: blur(24px);
+  }
+  
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(163, 166, 255, 0.2);
+  }
+  
+  .shadow-ambient {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* Surface helpers */
+  .bg-surface-dim { background-color: var(--surface-dim); }
+  .bg-surface { background-color: var(--surface); }
+  .bg-surface-container-low { background-color: var(--surface-container-low); }
+  .bg-surface-container { background-color: var(--surface-container); }
+  .bg-surface-container-high { background-color: var(--surface-container-high); }
+  .bg-surface-container-highest { background-color: var(--surface-container-highest); }
+  .bg-surface-bright { background-color: var(--surface-bright); }
+  
+  /* Text helpers */
+  .text-on-surface { color: var(--color-on-surface); }
+  .text-on-surface-variant { color: var(--color-on-surface-variant); }
+  
+  /* Rounded helpers */
+  .rounded-lg-custom { border-radius: 2rem; }
+  .rounded-xl-custom { border-radius: 3rem; }
 }
