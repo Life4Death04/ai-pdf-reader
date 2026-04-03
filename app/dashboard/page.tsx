@@ -42,6 +42,11 @@ export default function DashboardPage() {
     fetchDocuments(); // Refresh the list
   };
 
+  const handleDelete = (deletedId: string) => {
+    console.log(`[Dashboard] Removing document ${deletedId} from UI`);
+    setDocuments((prev) => prev.filter((doc) => doc.id !== deletedId));
+  };
+
   const readyDocuments = documents.filter((d) => d.status === "READY");
   const processingDocuments = documents.filter((d) => d.status !== "READY");
 
@@ -165,6 +170,7 @@ export default function DashboardPage() {
                     createdAt={doc.createdAt}
                     chunkCount={doc._count?.chunks}
                     progress={doc.status === "READY" ? 70 : 0}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>
