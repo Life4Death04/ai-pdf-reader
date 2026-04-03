@@ -19,7 +19,7 @@ export interface TTSOptions {
   voice?: string;
   speed?: number;
   chunkId?: string; // Optional: for cache key naming
-  retries?: number; // Number of retry attempts on failure (default: 3)
+  chunkIndex?: number; // Chunk index (0-based) for limiting TTS generation
 }
 
 export interface TTSResult {
@@ -31,6 +31,8 @@ export interface TTSResult {
 /**
  * Generates audio from text using Piper TTS service.
  * Caches results on disk to avoid re-generating the same audio.
+ * 
+ * Note: TTS is only applied to the first 2 chunks of each document.
  *
  * @param options - Text and optional TTS parameters
  * @returns Audio buffer and metadata
@@ -38,27 +40,34 @@ export interface TTSResult {
 export async function generateAudio(
   options: TTSOptions
 ): Promise<TTSResult> {
-  const { text, voice, speed, chunkId, retries = 3 } = options;
+  const { text, voice, speed, chunkId } = options;
+
+  console.log(`[TTS] Starting audio generation for chunk: ${chunkId ?? "unnamed"}`);
+  console.log(`[TTS] Text length: ${text.length} characters`);
+  console.log(`[TTS] Voice: ${voice ?? "default"}, Speed: ${speed ?? 1.0}`);
 
   // ── Step 1: Check cache ────────────────────────────────────────────────
   const cacheKey = generateCacheKey(text, voice, speed);
   const cachePath = path.join(AUDIO_CACHE_DIR, `${cacheKey}.wav`);
 
+  console.log(`[TTS] Cache key: ${cacheKey.slice(0, 16)}...`);
+  console.log(`[TTS] Checking cache at: ${cachePath}`);
+
   try {
     const cachedBuffer = await fs.readFile(cachePath);
-    console.log(`[TTS] Cache hit: ${chunkId ?? cacheKey.slice(0, 8)}`);
+    console.log(`[TTS] ✓ Cache hit for chunk: ${chunkId ?? cacheKey.slice(0, 8)}`);
+    console.log(`[TTS] Cached file size: ${(cachedBuffer.length / 1024).toFixed(1)}KB`);
     return {
       audioBuffer: cachedBuffer,
       cached: true,
     };
   } catch {
-    // Cache miss — proceed to generation
+    console.log(`[TTS] Cache miss - will generate new audio`);
   }
 
-  // ── Step 2: Call Piper HTTP service (with retry logic) ────────────────
-  console.log(
-    `[TTS] Generating audio for ${chunkId ?? `text (${text.length} chars)`}...`
-  );
+  // ── Step 2: Call Piper HTTP service ────────────────────────────────────
+  console.log(`[TTS] Generating audio for chunk: ${chunkId ?? `text (${text.length} chars)`}`);
+  console.log(`[TTS] TTS service URL: ${PIPER_URL}`);
 
   const requestBody = {
     text,
@@ -66,59 +75,53 @@ export async function generateAudio(
     ...(speed && { length_scale: 1 / speed }), // Piper uses inverse of speed
   };
 
-  // Retry with exponential backoff on failure
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const response = await fetch(PIPER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+  console.log(`[TTS] Request body:`, JSON.stringify(requestBody, null, 2));
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Piper TTS failed (${response.status}): ${errorText}`
-        );
-      }
+  try {
+    console.log(`[TTS] Sending request to Piper service...`);
+    const requestStart = Date.now();
+    
+    const response = await fetch(PIPER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
 
-      // ── Step 3: Read audio buffer ───────────────────────────────────────
-      const audioBuffer = Buffer.from(await response.arrayBuffer());
+    const requestDuration = Date.now() - requestStart;
+    console.log(`[TTS] Request completed in ${requestDuration}ms with status: ${response.status}`);
 
-      // ── Step 4: Cache the result ────────────────────────────────────────
-      await ensureCacheDir();
-      await fs.writeFile(cachePath, audioBuffer);
-
-      console.log(
-        `[TTS] Generated & cached: ${chunkId ?? cacheKey.slice(0, 8)} (${(audioBuffer.length / 1024).toFixed(1)}KB)${attempt > 1 ? ` [retry ${attempt - 1}]` : ""}`
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[TTS] ✗ Piper TTS error response:`, errorText);
+      throw new Error(
+        `Piper TTS failed (${response.status}): ${errorText}`
       );
-
-      return {
-        audioBuffer,
-        cached: false,
-      };
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      
-      if (attempt < retries) {
-        // Exponential backoff: 500ms, 1000ms, 2000ms
-        const delayMs = 500 * Math.pow(2, attempt - 1);
-        console.warn(
-          `[TTS] Attempt ${attempt}/${retries} failed for ${chunkId ?? "chunk"}, retrying in ${delayMs}ms...`
-        );
-        await sleep(delayMs);
-      }
     }
-  }
 
-  // All retries failed
-  console.error(
-    `[TTS] Failed after ${retries} attempts for ${chunkId ?? "chunk"}:`,
-    lastError
-  );
-  throw lastError!;
+    // ── Step 3: Read audio buffer ───────────────────────────────────────
+    console.log(`[TTS] Reading audio buffer from response...`);
+    const audioBuffer = Buffer.from(await response.arrayBuffer());
+    console.log(`[TTS] Audio buffer received: ${(audioBuffer.length / 1024).toFixed(1)}KB`);
+
+    // ── Step 4: Cache the result ────────────────────────────────────────
+    console.log(`[TTS] Caching audio to: ${cachePath}`);
+    await ensureCacheDir();
+    await fs.writeFile(cachePath, audioBuffer);
+    console.log(`[TTS] ✓ Audio cached successfully`);
+
+    console.log(
+      `[TTS] ✓ Generated & cached: ${chunkId ?? cacheKey.slice(0, 8)} (${(audioBuffer.length / 1024).toFixed(1)}KB)`
+    );
+
+    return {
+      audioBuffer,
+      cached: false,
+    };
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error(`[TTS] ✗ Failed to generate audio:`, err.message);
+    throw err;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -232,12 +235,4 @@ export async function getAudioCacheSize(): Promise<{
     console.error("[TTS] Failed to get cache size:", error);
     return { totalFiles: 0, totalBytes: 0, totalMB: 0 };
   }
-}
-
-/**
- * Helper: Sleep for a given duration.
- * Used for exponential backoff in retry logic.
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
