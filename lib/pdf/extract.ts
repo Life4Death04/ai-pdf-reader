@@ -1,4 +1,4 @@
-import { PDFParse } from "pdf-parse";
+import { extractText, getDocumentProxy } from "unpdf";
 
 export interface ExtractionResult {
   text: string;
@@ -7,20 +7,37 @@ export interface ExtractionResult {
 
 /**
  * Extracts and cleans text from a PDF buffer.
- * Uses the new pdf-parse v2 class-based API:
- *   new PDFParse({ data }) → getText() → result.text / result.total
+ * Uses unpdf to parse the PDF and extract text with merged pages.
  */
 export async function extractTextFromPDF(
   buffer: Buffer
 ): Promise<ExtractionResult> {
-  const parser = new PDFParse({ data: buffer });
-  try {
-    const result = await parser.getText();
-    const text = cleanText(result.text);
-    return { text, pageCount: result.total };
-  } finally {
-    await parser.destroy();
-  }
+  console.log("[PDF Extract] Starting PDF text extraction");
+  console.log(`[PDF Extract] Buffer size: ${buffer.length} bytes`);
+  
+  // Convert Buffer to Uint8Array for unpdf
+  const uint8Array = new Uint8Array(buffer);
+  console.log(`[PDF Extract] Converted to Uint8Array: ${uint8Array.length} bytes`);
+  
+  // Load the PDF document
+  console.log("[PDF Extract] Loading PDF document proxy...");
+  const pdf = await getDocumentProxy(uint8Array);
+  console.log(`[PDF Extract] PDF loaded successfully. Number of pages: ${pdf.numPages}`);
+  
+  // Extract text with pages merged
+  console.log("[PDF Extract] Extracting text with merged pages...");
+  const result = await extractText(pdf, { mergePages: true });
+  console.log(`[PDF Extract] Text extracted. Total pages: ${result.totalPages}`);
+  console.log(`[PDF Extract] Raw text length: ${result.text.length} characters`);
+  
+  // Clean the extracted text
+  console.log("[PDF Extract] Cleaning extracted text...");
+  const text = cleanText(result.text);
+  console.log(`[PDF Extract] Cleaned text length: ${text.length} characters`);
+  console.log(`[PDF Extract] Text preview (first 200 chars): ${text.substring(0, 200)}...`);
+  
+  console.log("[PDF Extract] Extraction completed successfully");
+  return { text, pageCount: result.totalPages };
 }
 
 function cleanText(raw: string): string {
