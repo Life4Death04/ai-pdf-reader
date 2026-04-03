@@ -25,15 +25,19 @@ export async function processDocument(documentId: string): Promise<void> {
     const doc = await prisma.document.findUniqueOrThrow({
       where: { id: documentId },
     });
+    console.log(doc, "doc");
 
     // ── Step 2: Extract text from PDF ─────────────────────────────────────
-    await prisma.document.update({
+    console.log(
+      await prisma.document.update({
       where: { id: documentId },
       data: { status: DocumentStatus.EXTRACTING },
-    });
+    })
+    );
 
     const fileBuffer = await fs.readFile(doc.fileUrl);
     const { text, pageCount } = await extractTextFromPDF(fileBuffer);
+    console.log(`[process] Extracted text from document ${documentId}: ${text.length} chars, ${pageCount} pages`);
 
     await prisma.document.update({
       where: { id: documentId },
