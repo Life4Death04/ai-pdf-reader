@@ -18,12 +18,13 @@ import { DocumentStatus, ProcessingMode } from "@/types";
  * Flow:
  * 1. Load document + chunks from database
  * 2. Send WAV header with estimated size
- * 3. For each chunk (in order):
- *    - Generate/retrieve audio via TTS (with retry)
+ * 3. For first 2 chunks only:
+ *    - Generate/retrieve audio via TTS
  *    - Strip individual WAV headers
  *    - Send PCM data immediately
  *    - On failure: insert silence as fallback
- * 4. Close stream
+ * 4. For remaining chunks: insert silence
+ * 5. Close stream
  *
  * Response:
  *   - Content-Type: audio/wav
@@ -115,51 +116,66 @@ export async function GET(request: NextRequest) {
             `[stream] WAV header sent (estimated: ${estimatedDuration}s, ${(estimatedSize / 1024 / 1024).toFixed(2)}MB)`
           );
 
-          // Step 2: Stream each chunk's audio
+          // Step 2: Stream each chunk's audio (TTS only for first 2 chunks)
+          const MAX_TTS_CHUNKS = 2;
+          
           for (let i = 0; i < document.chunks.length; i++) {
             const chunk = document.chunks[i];
             const chunkId = `${documentId}#${chunk.index}`;
 
-            try {
+            // Only generate TTS audio for first 2 chunks
+            if (i < MAX_TTS_CHUNKS) {
+              try {
+                console.log(
+                  `[stream] Processing chunk ${i + 1}/${document.chunks.length} (${chunkId}) with TTS`
+                );
+
+                // Generate audio for this chunk
+                const result = await generateAudio({
+                  text: chunk.text,
+                  chunkId: chunkId,
+                  chunkIndex: i,
+                });
+
+                // Strip WAV header (we already sent the master header)
+                const pcmData = stripWAVHeader(result.audioBuffer);
+
+                // Send PCM data immediately
+                controller.enqueue(new Uint8Array(pcmData));
+
+                console.log(
+                  `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${(pcmData.length / 1024).toFixed(1)}KB, cached: ${result.cached})`
+                );
+              } catch (error) {
+                // TTS failed — insert silence as fallback
+                console.error(
+                  `[stream] Chunk ${i + 1}/${document.chunks.length} TTS failed:`,
+                  error
+                );
+
+                // Estimate chunk duration based on text length
+                const chunkDuration = estimateAudioDuration(chunk.text.length);
+                const silenceBuffer = generateSilence(chunkDuration);
+
+                controller.enqueue(new Uint8Array(silenceBuffer));
+
+                console.warn(
+                  `[stream] Inserted ${chunkDuration}s of silence for failed chunk ${chunkId}`
+                );
+              }
+            } else {
+              // Skip TTS for chunks beyond the first 2 - insert brief silence
               console.log(
-                `[stream] Processing chunk ${i + 1}/${document.chunks.length} (${chunkId})`
+                `[stream] Skipping TTS for chunk ${i + 1}/${document.chunks.length} (beyond limit of ${MAX_TTS_CHUNKS})`
               );
-
-              // Generate audio with retry logic (3 attempts with backoff)
-              const result = await generateAudio({
-                text: chunk.text,
-                chunkId: chunkId,
-                retries: 3,
-              });
-
-              // Strip WAV header (we already sent the master header)
-              const pcmData = stripWAVHeader(result.audioBuffer);
-
-              // Send PCM data immediately
-              controller.enqueue(new Uint8Array(pcmData));
-
-              console.log(
-                `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${(pcmData.length / 1024).toFixed(1)}KB, cached: ${result.cached})`
-              );
-            } catch (error) {
-              // All retries failed — insert silence as fallback
-              console.error(
-                `[stream] Chunk ${i + 1}/${document.chunks.length} failed after retries:`,
-                error
-              );
-
-              // Estimate chunk duration based on text length
+              
               const chunkDuration = estimateAudioDuration(chunk.text.length);
               const silenceBuffer = generateSilence(chunkDuration);
-
               controller.enqueue(new Uint8Array(silenceBuffer));
-
-              console.warn(
-                `[stream] Inserted ${chunkDuration}s of silence for failed chunk ${chunkId}`
+              
+              console.log(
+                `[stream] Inserted ${chunkDuration}s of silence for chunk ${chunkId}`
               );
-
-              // TODO: Send progress event to frontend so it can show retry UI
-              // This could be done via Server-Sent Events or a separate polling endpoint
             }
           }
 
