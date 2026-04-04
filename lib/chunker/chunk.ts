@@ -1,4 +1,5 @@
 import type { TextChunkInput } from "@/types";
+import { preprocessText } from "./filter";
 
 // ─────────────────────────────────────────────
 // Config
@@ -64,6 +65,43 @@ export function chunkText(text: string): TextChunkInput[] {
     console.log(`[chunkText] Created final chunk ${index}: ${buffer.length} chars`);
   }
 
+  return chunks;
+}
+
+/**
+ * Complete preprocessing + chunking pipeline.
+ * 
+ * Applies page-level filtering BEFORE chunking to remove:
+ * - Table of contents
+ * - Indexes
+ * - References/Bibliography
+ * - Short pages (< 50 words)
+ * - Non-text content (tables, code)
+ * 
+ * Then chunks the filtered text for TTS.
+ * 
+ * USE THIS for production PDF processing.
+ * Use plain `chunkText()` only if you've already filtered the text.
+ * 
+ * @param text - Cleaned text from PDF extraction
+ * @returns Array of filtered, chunked text ready for TTS
+ */
+export function chunkTextWithFiltering(text: string): TextChunkInput[] {
+  console.log("\n" + "=".repeat(60));
+  console.log("📚 CHUNK WITH FILTERING PIPELINE");
+  console.log("=".repeat(60) + "\n");
+  
+  // Step 1: Filter out useless pages
+  const filtered = preprocessText(text);
+  
+  // Step 2: Chunk the filtered text
+  const chunks = chunkText(filtered);
+  
+  console.log("\n" + "=".repeat(60));
+  console.log("✅ CHUNKING PIPELINE COMPLETE");
+  console.log(`   Total chunks: ${chunks.length}`);
+  console.log("=".repeat(60) + "\n");
+  
   return chunks;
 }
 

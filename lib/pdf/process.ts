@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma/prisma";
 import { extractTextFromPDF } from "@/lib/pdf/extract";
-import { chunkText } from "@/lib/chunker/chunk";
+import { chunkTextWithFiltering } from "@/lib/chunker/chunk";
 import { DocumentStatus } from "../../generated/prisma";
 
 /**
@@ -49,7 +49,8 @@ export async function processDocument(documentId: string): Promise<void> {
     });
 
     // ── Step 3: Chunk the text ─────────────────────────────────────────────
-    const chunks = chunkText(text);
+    // Uses page-level filtering to remove ToC, Index, References, etc.
+    const chunks = chunkTextWithFiltering(text);
 
     // Batch-insert all chunks. We use createMany for efficiency — one round
     // trip instead of N inserts. skipDuplicates protects against retries.
