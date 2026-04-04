@@ -47,6 +47,26 @@ function cleanText(raw: string): string {
       .replace(/\r\n/g, "\n")
       .replace(/\r/g, "\n")
 
+      // Remove page numbers (various patterns)
+      // Patterns: "Page 1", "Page 23", "- 45 -", "| 23 |"
+      .replace(/^[\s\-|]*page\s+\d+[\s\-|]*$/gim, "")
+      .replace(/^[\s\-|]*\d+[\s\-|]*$/gm, "") // Standalone numbers on their own line
+      .replace(/\n\s*\d+\s*\n/g, "\n") // Numbers surrounded by blank lines
+
+      // Remove reference citations
+      // Patterns: [1], [23], [Ref], [Author, 2020]
+      .replace(/\[\d+\]/g, "")
+      .replace(/\[[\w\s,]+\]/g, "")
+
+      // Remove URLs and email addresses
+      .replace(/https?:\/\/[^\s]+/gi, "")
+      .replace(/www\.[^\s]+/gi, "")
+      .replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, "")
+
+      // Remove figure/table captions
+      // Patterns: "Figure 1:", "Table 2.3:", "Fig. 5:", "Tbl 7:"
+      .replace(/^(figure|fig|table|tbl)\.?\s*\d+[.:]?.*$/gim, "")
+
       // Rejoin words broken across lines with a hyphen (common in PDFs)
       // e.g., "exam-\nple" → "example"
       .replace(/-\n(\S)/g, "$1")
@@ -58,8 +78,8 @@ function cleanText(raw: string): string {
       // Collapse more than 2 consecutive blank lines into exactly 2
       .replace(/\n{3,}/g, "\n\n")
 
-      // Collapse multiple spaces/tabs on a single line into one space
-      .replace(/[ \t]{2,}/g, " ")
+      // Normalize multiple spaces into a single space
+      .replace(/[ \t]+/g, " ")
 
       // Trim leading/trailing whitespace from each line
       .split("\n")
