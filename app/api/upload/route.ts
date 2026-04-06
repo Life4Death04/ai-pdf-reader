@@ -3,12 +3,8 @@ import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prisma/prisma";
-import {
-  processDocument,
-  ensureUploadDir,
-  getUploadDir,
-  buildFilePath,
-} from "@/lib/pdf/process";
+import { processDocument, rewriteDocumentChunks } from "@/lib/pdf/process";
+import { ensureUploadDir, getUploadDir, buildFilePath } from "@/lib/utils/utils";
 
 const MAX_FILE_SIZE_BYTES =
   parseInt(process.env.MAX_FILE_SIZE_MB ?? "50", 10) * 1024 * 1024;
@@ -77,7 +73,27 @@ export async function POST(request: NextRequest) {
     // ── Fire-and-forget background processing ─────────────────────────────
     // We do NOT await this. The response is sent immediately and processing
     // continues in the background, updating document.status as it progresses.
-    void processDocument(document.id);
+    // 
+    // Two-phase processing:
+    // 1. FAST PATH: Extract + Chunk → Document becomes READY (2-5 seconds)
+    // 2. SLOW PATH (optional): AI rewrite chunks in background (30-60 minutes)
+    void (async () => {
+      try {
+        // Phase 1: Fast path - extract and chunk
+        await processDocument(document.id);
+        
+        // Phase 2: Slow path - optionally rewrite chunks
+        if (process.env.ENABLE_AI_REWRITE === "true") {
+          console.log(`[upload] Document ${document.id} is READY. Starting AI rewrite in background...`);
+          await rewriteDocumentChunks(document.id, {
+            mode: "audiobook",
+            concurrency: 3, // Process 3 chunks at once
+          });
+        }
+      } catch (error) {
+        console.error(`[upload] Background processing failed for ${document.id}:`, error);
+      }
+    })();
 
     return NextResponse.json(
       {
