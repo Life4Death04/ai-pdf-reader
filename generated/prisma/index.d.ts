@@ -2400,6 +2400,9 @@ export namespace Prisma {
     status: $Enums.DocumentStatus | null
     createdAt: Date | null
     updatedAt: Date | null
+    errorMessage: string | null
+    errorCode: string | null
+    failedAt: Date | null
     userId: string | null
   }
 
@@ -2414,6 +2417,9 @@ export namespace Prisma {
     status: $Enums.DocumentStatus | null
     createdAt: Date | null
     updatedAt: Date | null
+    errorMessage: string | null
+    errorCode: string | null
+    failedAt: Date | null
     userId: string | null
   }
 
@@ -2428,6 +2434,9 @@ export namespace Prisma {
     status: number
     createdAt: number
     updatedAt: number
+    errorMessage: number
+    errorCode: number
+    failedAt: number
     userId: number
     _all: number
   }
@@ -2454,6 +2463,9 @@ export namespace Prisma {
     status?: true
     createdAt?: true
     updatedAt?: true
+    errorMessage?: true
+    errorCode?: true
+    failedAt?: true
     userId?: true
   }
 
@@ -2468,6 +2480,9 @@ export namespace Prisma {
     status?: true
     createdAt?: true
     updatedAt?: true
+    errorMessage?: true
+    errorCode?: true
+    failedAt?: true
     userId?: true
   }
 
@@ -2482,6 +2497,9 @@ export namespace Prisma {
     status?: true
     createdAt?: true
     updatedAt?: true
+    errorMessage?: true
+    errorCode?: true
+    failedAt?: true
     userId?: true
     _all?: true
   }
@@ -2583,6 +2601,9 @@ export namespace Prisma {
     status: $Enums.DocumentStatus
     createdAt: Date
     updatedAt: Date
+    errorMessage: string | null
+    errorCode: string | null
+    failedAt: Date | null
     userId: string
     _count: DocumentCountAggregateOutputType | null
     _avg: DocumentAvgAggregateOutputType | null
@@ -2616,6 +2637,9 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    errorMessage?: boolean
+    errorCode?: boolean
+    failedAt?: boolean
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     chunks?: boolean | Document$chunksArgs<ExtArgs>
@@ -2634,6 +2658,9 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    errorMessage?: boolean
+    errorCode?: boolean
+    failedAt?: boolean
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["document"]>
@@ -2649,6 +2676,9 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    errorMessage?: boolean
+    errorCode?: boolean
+    failedAt?: boolean
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["document"]>
@@ -2664,10 +2694,13 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    errorMessage?: boolean
+    errorCode?: boolean
+    failedAt?: boolean
     userId?: boolean
   }
 
-  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["document"]>
+  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
   export type DocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     chunks?: boolean | Document$chunksArgs<ExtArgs>
@@ -2699,6 +2732,9 @@ export namespace Prisma {
       status: $Enums.DocumentStatus
       createdAt: Date
       updatedAt: Date
+      errorMessage: string | null
+      errorCode: string | null
+      failedAt: Date | null
       userId: string
     }, ExtArgs["result"]["document"]>
     composites: {}
@@ -3136,6 +3172,9 @@ export namespace Prisma {
     readonly status: FieldRef<"Document", 'DocumentStatus'>
     readonly createdAt: FieldRef<"Document", 'DateTime'>
     readonly updatedAt: FieldRef<"Document", 'DateTime'>
+    readonly errorMessage: FieldRef<"Document", 'String'>
+    readonly errorCode: FieldRef<"Document", 'String'>
+    readonly failedAt: FieldRef<"Document", 'DateTime'>
     readonly userId: FieldRef<"Document", 'String'>
   }
     
@@ -5929,6 +5968,9 @@ export namespace Prisma {
     status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
+    errorMessage: 'errorMessage',
+    errorCode: 'errorCode',
+    failedAt: 'failedAt',
     userId: 'userId'
   };
 
@@ -6163,6 +6205,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
+    errorMessage?: StringNullableFilter<"Document"> | string | null
+    errorCode?: StringNullableFilter<"Document"> | string | null
+    failedAt?: DateTimeNullableFilter<"Document"> | Date | string | null
     userId?: StringFilter<"Document"> | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     chunks?: TextChunkListRelationFilter
@@ -6180,6 +6225,9 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    errorCode?: SortOrderInput | SortOrder
+    failedAt?: SortOrderInput | SortOrder
     userId?: SortOrder
     user?: UserOrderByWithRelationInput
     chunks?: TextChunkOrderByRelationAggregateInput
@@ -6200,6 +6248,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
+    errorMessage?: StringNullableFilter<"Document"> | string | null
+    errorCode?: StringNullableFilter<"Document"> | string | null
+    failedAt?: DateTimeNullableFilter<"Document"> | Date | string | null
     userId?: StringFilter<"Document"> | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     chunks?: TextChunkListRelationFilter
@@ -6217,6 +6268,9 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    errorCode?: SortOrderInput | SortOrder
+    failedAt?: SortOrderInput | SortOrder
     userId?: SortOrder
     _count?: DocumentCountOrderByAggregateInput
     _avg?: DocumentAvgOrderByAggregateInput
@@ -6239,6 +6293,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusWithAggregatesFilter<"Document"> | $Enums.DocumentStatus
     createdAt?: DateTimeWithAggregatesFilter<"Document"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Document"> | Date | string
+    errorMessage?: StringNullableWithAggregatesFilter<"Document"> | string | null
+    errorCode?: StringNullableWithAggregatesFilter<"Document"> | string | null
+    failedAt?: DateTimeNullableWithAggregatesFilter<"Document"> | Date | string | null
     userId?: StringWithAggregatesFilter<"Document"> | string
   }
 
@@ -6473,6 +6530,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     user: UserCreateNestedOneWithoutDocumentsInput
     chunks?: TextChunkCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
@@ -6489,6 +6549,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     userId: string
     chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
@@ -6505,6 +6568,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
     chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
@@ -6521,6 +6587,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
     chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
@@ -6537,6 +6606,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     userId: string
   }
 
@@ -6551,6 +6623,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type DocumentUncheckedUpdateManyInput = {
@@ -6564,6 +6639,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
   }
 
@@ -6892,6 +6970,17 @@ export namespace Prisma {
     not?: NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -6918,6 +7007,9 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    errorMessage?: SortOrder
+    errorCode?: SortOrder
+    failedAt?: SortOrder
     userId?: SortOrder
   }
 
@@ -6937,6 +7029,9 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    errorMessage?: SortOrder
+    errorCode?: SortOrder
+    failedAt?: SortOrder
     userId?: SortOrder
   }
 
@@ -6951,6 +7046,9 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    errorMessage?: SortOrder
+    errorCode?: SortOrder
+    failedAt?: SortOrder
     userId?: SortOrder
   }
 
@@ -6983,6 +7081,20 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumDocumentStatusFilter<$PrismaModel>
     _max?: NestedEnumDocumentStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -7304,6 +7416,10 @@ export namespace Prisma {
     set?: $Enums.DocumentStatus
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type UserUpdateOneRequiredWithoutDocumentsNestedInput = {
     create?: XOR<UserCreateWithoutDocumentsInput, UserUncheckedCreateWithoutDocumentsInput>
     connectOrCreate?: UserCreateOrConnectWithoutDocumentsInput
@@ -7559,6 +7675,17 @@ export namespace Prisma {
     not?: NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
@@ -7594,6 +7721,20 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumDocumentStatusFilter<$PrismaModel>
     _max?: NestedEnumDocumentStatusFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumProcessingModeFilter<$PrismaModel = never> = {
@@ -7667,6 +7808,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     chunks?: TextChunkCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
   }
@@ -7682,6 +7826,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
   }
@@ -7754,6 +7901,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
+    errorMessage?: StringNullableFilter<"Document"> | string | null
+    errorCode?: StringNullableFilter<"Document"> | string | null
+    failedAt?: DateTimeNullableFilter<"Document"> | Date | string | null
     userId?: StringFilter<"Document"> | string
   }
 
@@ -7960,6 +8110,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     user: UserCreateNestedOneWithoutDocumentsInput
     playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
   }
@@ -7975,6 +8128,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     userId: string
     playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
   }
@@ -8006,6 +8162,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
     playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
   }
@@ -8021,6 +8180,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
     playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
   }
@@ -8061,6 +8223,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     user: UserCreateNestedOneWithoutDocumentsInput
     chunks?: TextChunkCreateNestedManyWithoutDocumentInput
   }
@@ -8076,6 +8241,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
     userId: string
     chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
   }
@@ -8138,6 +8306,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
     chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
   }
@@ -8153,6 +8324,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
     chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
   }
@@ -8168,6 +8342,9 @@ export namespace Prisma {
     status?: $Enums.DocumentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
   }
 
   export type PlaybackProgressCreateManyUserInput = {
@@ -8190,6 +8367,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
   }
@@ -8205,6 +8385,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
   }
@@ -8220,6 +8403,9 @@ export namespace Prisma {
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PlaybackProgressUpdateWithoutUserInput = {
