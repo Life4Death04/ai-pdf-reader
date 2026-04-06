@@ -2,7 +2,8 @@ import fs from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma/prisma";
 import { extractTextFromPDF } from "@/lib/pdf/extract";
-import { chunkText } from "@/lib/chunker/chunk";
+import { chunkTextWithFiltering } from "@/lib/chunker/chunk";
+import { rewriteChunk, checkOllamaHealth, warmupModel } from "@/lib/ai/rewrite";
 import { DocumentStatus } from "../../generated/prisma";
 
 /**
@@ -25,15 +26,19 @@ export async function processDocument(documentId: string): Promise<void> {
     const doc = await prisma.document.findUniqueOrThrow({
       where: { id: documentId },
     });
+    console.log(doc, "doc");
 
     // ── Step 2: Extract text from PDF ─────────────────────────────────────
-    await prisma.document.update({
+    console.log(
+      await prisma.document.update({
       where: { id: documentId },
       data: { status: DocumentStatus.EXTRACTING },
-    });
+    })
+    );
 
     const fileBuffer = await fs.readFile(doc.fileUrl);
     const { text, pageCount } = await extractTextFromPDF(fileBuffer);
+    console.log(`[process] Extracted text from document ${documentId}: ${text.length} chars, ${pageCount} pages`);
 
     await prisma.document.update({
       where: { id: documentId },
@@ -45,12 +50,75 @@ export async function processDocument(documentId: string): Promise<void> {
     });
 
     // ── Step 3: Chunk the text ─────────────────────────────────────────────
-    const chunks = chunkText(text);
+    // Uses page-level filtering to remove ToC, Index, References, etc.
+    const chunks = chunkTextWithFiltering(text);
 
+    console.log(`[process] Generated ${chunks.length} chunks`);
+
+    // ── Step 4: AI Rewrite Chunks (Optional) ──────────────────────────────
+    // Transforms chunks into natural audiobook-style narration
+    // This step is OPTIONAL - controlled by environment variable
+    const shouldRewrite = process.env.ENABLE_AI_REWRITE === "true";
+    let finalChunks = chunks;
+
+    if (shouldRewrite) {
+      console.log("[process] AI rewrite enabled - checking Ollama health...");
+      
+      const ollamaHealthy = await checkOllamaHealth();
+      
+      if (ollamaHealthy) {
+        console.log("[process] Ollama healthy - starting rewrite process...");
+        
+        // Update status to show we're rewriting
+        await prisma.document.update({
+          where: { id: documentId },
+          data: { status: DocumentStatus.CHUNKING }, // We'll use CHUNKING status for rewriting too
+        });
+
+        // ── Warmup: Pre-load model into memory ──────────────────────────────
+        console.log("[process] Warming up model...");
+        await warmupModel();
+
+        // Rewrite each chunk sequentially
+        const rewrittenTexts: string[] = [];
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          console.log(`\n[process] Rewriting chunk ${i + 1}/${chunks.length} (${chunk.text.length} chars)`);
+          
+          const rewritten = await rewriteChunk(chunk.text, {
+            mode: "podcast", // Default mode - can be made configurable later
+            skipShort: true,
+          });
+          
+          rewrittenTexts.push(rewritten);
+          
+          // Log progress every 10 chunks
+          if ((i + 1) % 10 === 0) {
+            console.log(`[process] Progress: ${i + 1}/${chunks.length} chunks rewritten`);
+          }
+        }
+
+        // Replace chunk texts with rewritten versions
+        finalChunks = chunks.map((chunk, index) => ({
+          ...chunk,
+          text: rewrittenTexts[index],
+          // Recalculate token count for rewritten text
+          tokenCount: Math.ceil(rewrittenTexts[index].length / 4),
+        }));
+
+        console.log(`\n[process] ✅ All chunks rewritten successfully`);
+      } else {
+        console.log("[process] ⚠️  Ollama not available - skipping rewrite, using original chunks");
+      }
+    } else {
+      console.log("[process] AI rewrite disabled (set ENABLE_AI_REWRITE=true to enable)");
+    }
+
+    // ── Step 5: Save Chunks to Database ───────────────────────────────────
     // Batch-insert all chunks. We use createMany for efficiency — one round
     // trip instead of N inserts. skipDuplicates protects against retries.
     await prisma.textChunk.createMany({
-      data: chunks.map((chunk) => ({
+      data: finalChunks.map((chunk) => ({
         documentId,
         index: chunk.index,
         text: chunk.text,
@@ -59,14 +127,14 @@ export async function processDocument(documentId: string): Promise<void> {
       skipDuplicates: true,
     });
 
-    // ── Step 4: Mark as ready ──────────────────────────────────────────────
+    // ── Step 6: Mark as ready ──────────────────────────────────────────────
     await prisma.document.update({
       where: { id: documentId },
       data: { status: DocumentStatus.READY },
     });
 
     console.log(
-      `[process] Document ${documentId} ready — ${chunks.length} chunks, ${pageCount} pages`
+      `[process] Document ${documentId} ready — ${finalChunks.length} chunks, ${pageCount} pages`
     );
   } catch (error) {
     console.error(`[process] Failed to process document ${documentId}:`, error);
