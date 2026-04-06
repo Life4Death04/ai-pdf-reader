@@ -38,8 +38,8 @@ let modelWarmedUp = false;
  * OPTIMIZED FOR PHI3: Shorter, more direct prompts work better with smaller models.
  * Phi3 tends to be verbose, so we keep instructions minimal and focused.
  */
-function buildRewritePrompt(chunk: string, mode: "podcast" | "formal" = "podcast"): string {
-  if (mode === "podcast") {
+function buildRewritePrompt(chunk: string, mode: "audiobook" | "formal" = "audiobook"): string {
+  if (mode === "audiobook") {
     return `Rewrite this text for an audiobook. Make it conversational and natural like explaining to a friend. Keep ALL the information but use simpler words and shorter sentences. Do NOT add explanations or meta-commentary - just output the rewritten text.
 
 Text:
@@ -164,11 +164,11 @@ async function callOllama(prompt: string, isFirstRequest = false): Promise<strin
 export async function rewriteChunk(
   chunk: string,
   options: {
-    mode?: "podcast" | "formal";
+    mode?: "audiobook" | "formal";
     skipShort?: boolean;
   } = {}
 ): Promise<string> {
-  const { mode = "podcast", skipShort = true } = options;
+  const { mode = "audiobook", skipShort = true } = options;
 
   console.log("\n" + "─".repeat(60));
   console.log("🎙️  AI REWRITE STARTED");
@@ -304,12 +304,12 @@ export async function warmupModel(): Promise<boolean> {
 export async function rewriteChunks(
   chunks: string[],
   options: {
-    mode?: "podcast" | "formal";
-    onProgress?: (current: number, total: number) => void;
+    mode?: "audiobook" | "formal";
+    onProgress?: (completed: number, total: number) => void;
     skipWarmup?: boolean;
   } = {}
 ): Promise<string[]> {
-  const { mode = "podcast", onProgress, skipWarmup = false } = options;
+  const { mode = "audiobook", onProgress, skipWarmup = false } = options;
 
   console.log("\n" + "=".repeat(60));
   console.log(`🎙️  BATCH REWRITE: ${chunks.length} chunks`);
