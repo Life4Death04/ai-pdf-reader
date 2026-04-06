@@ -116,65 +116,47 @@ export async function GET(request: NextRequest) {
             `[stream] WAV header sent (estimated: ${estimatedDuration}s, ${(estimatedSize / 1024 / 1024).toFixed(2)}MB)`
           );
 
-          // Step 2: Stream each chunk's audio (TTS only for first 2 chunks)
-          const MAX_TTS_CHUNKS = 2;
-          
+          // Step 2: Stream each chunk's audio (generate TTS for all chunks)
           for (let i = 0; i < document.chunks.length; i++) {
             const chunk = document.chunks[i];
             const chunkId = `${documentId}#${chunk.index}`;
 
-            // Only generate TTS audio for first 2 chunks
-            if (i < MAX_TTS_CHUNKS) {
-              try {
-                console.log(
-                  `[stream] Processing chunk ${i + 1}/${document.chunks.length} (${chunkId}) with TTS`
-                );
-
-                // Generate audio for this chunk
-                const result = await generateAudio({
-                  text: chunk.text,
-                  chunkId: chunkId,
-                  chunkIndex: i,
-                });
-
-                // Strip WAV header (we already sent the master header)
-                const pcmData = stripWAVHeader(result.audioBuffer);
-
-                // Send PCM data immediately
-                controller.enqueue(new Uint8Array(pcmData));
-
-                console.log(
-                  `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${(pcmData.length / 1024).toFixed(1)}KB, cached: ${result.cached})`
-                );
-              } catch (error) {
-                // TTS failed — insert silence as fallback
-                console.error(
-                  `[stream] Chunk ${i + 1}/${document.chunks.length} TTS failed:`,
-                  error
-                );
-
-                // Estimate chunk duration based on text length
-                const chunkDuration = estimateAudioDuration(chunk.text.length);
-                const silenceBuffer = generateSilence(chunkDuration);
-
-                controller.enqueue(new Uint8Array(silenceBuffer));
-
-                console.warn(
-                  `[stream] Inserted ${chunkDuration}s of silence for failed chunk ${chunkId}`
-                );
-              }
-            } else {
-              // Skip TTS for chunks beyond the first 2 - insert brief silence
+            try {
               console.log(
-                `[stream] Skipping TTS for chunk ${i + 1}/${document.chunks.length} (beyond limit of ${MAX_TTS_CHUNKS})`
+                `[stream] Processing chunk ${i + 1}/${document.chunks.length} (${chunkId}) with TTS`
               );
-              
+
+              // Generate audio for this chunk
+              const result = await generateAudio({
+                text: chunk.text,
+                chunkId: chunkId,
+                chunkIndex: i,
+              });
+
+              // Strip WAV header (we already sent the master header)
+              const pcmData = stripWAVHeader(result.audioBuffer);
+
+              // Send PCM data immediately
+              controller.enqueue(new Uint8Array(pcmData));
+
+              console.log(
+                `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${(pcmData.length / 1024).toFixed(1)}KB, cached: ${result.cached})`
+              );
+            } catch (error) {
+              // TTS failed — insert silence as fallback
+              console.error(
+                `[stream] Chunk ${i + 1}/${document.chunks.length} TTS failed:`,
+                error
+              );
+
+              // Estimate chunk duration based on text length
               const chunkDuration = estimateAudioDuration(chunk.text.length);
               const silenceBuffer = generateSilence(chunkDuration);
+
               controller.enqueue(new Uint8Array(silenceBuffer));
-              
-              console.log(
-                `[stream] Inserted ${chunkDuration}s of silence for chunk ${chunkId}`
+
+              console.warn(
+                `[stream] Inserted ${chunkDuration}s of silence for failed chunk ${chunkId}`
               );
             }
           }
