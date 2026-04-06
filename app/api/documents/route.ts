@@ -22,6 +22,9 @@ export async function GET() {
       pageCount: true,
       status: true,
       createdAt: true,
+      errorMessage: true,
+      errorCode: true,
+      failedAt: true,
       _count: { select: { chunks: true } },
     },
   });

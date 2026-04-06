@@ -140,6 +140,9 @@ exports.Prisma.DocumentScalarFieldEnum = {
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  errorMessage: 'errorMessage',
+  errorCode: 'errorCode',
+  failedAt: 'failedAt',
   userId: 'userId'
 };
 

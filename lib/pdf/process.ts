@@ -5,6 +5,7 @@ import { chunkTextWithFiltering } from "@/lib/chunker/chunk";
 import { rewriteChunk, checkOllamaHealth, warmupModel } from "@/lib/ai/rewrite";
 import { DocumentStatus } from "../../generated/prisma";
 import { asyncPoolWithProgress } from "@/lib/utils/asyncPool";
+import { createErrorDetails } from "@/lib/utils/errorClassifier";
 
 /**
  * FAST PATH: Processes a document through extraction and chunking only.
@@ -90,13 +91,27 @@ export async function processDocument(documentId: string): Promise<void> {
   } catch (error) {
     console.error(`[process] Failed to process document ${documentId}:`, error);
 
-    // Best-effort status update — don't throw (we're in a fire-and-forget context)
+    // Classify error and get details
+    const { errorCode, errorMessage } = createErrorDetails(error);
+    
+    console.error(`[process] Error classified as: ${errorCode}`);
+    console.error(`[process] User-facing message: ${errorMessage}`);
+
+    // Update document with error details
     await prisma.document
       .update({
         where: { id: documentId },
-        data: { status: DocumentStatus.ERROR },
+        data: { 
+          status: DocumentStatus.ERROR,
+          errorMessage,
+          errorCode,
+          failedAt: new Date(),
+        },
       })
-      .catch(() => {});
+      .catch((dbError) => {
+        // If we can't even update the database, log it but don't throw
+        console.error(`[process] Failed to update error status in database:`, dbError);
+      });
   }
 }
 
