@@ -69,6 +69,10 @@ model Document {
   chunks           TextChunk[]
   playbackProgress PlaybackProgress[]
 
+  // Performance indexes
+  @@index([userId, createdAt(sort: Desc)]) // Dashboard: user's documents, newest first
+  @@index([status])                         // Find documents by status (ERROR, READY, etc.)
+  @@index([createdAt])                      // Admin queries and cleanup tasks
   @@map("documents")
 }
 
@@ -110,5 +114,7 @@ model PlaybackProgress {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, documentId]) // one progress record per (user, document)
+  @@index([userId, documentId, mode]) // Fast progress lookup
+  @@index([updatedAt])                 // Analytics and cleanup queries
   @@map("playback_progress")
 }

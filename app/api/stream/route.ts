@@ -118,6 +118,15 @@ export async function GET(request: NextRequest) {
 
           // Step 2: Stream each chunk's audio (generate TTS for all chunks)
           for (let i = 0; i < document.chunks.length; i++) {
+            // Check if client disconnected before processing next chunk
+            if (request.signal?.aborted) {
+              console.log(
+                `[stream] ⚠️  Client disconnected at chunk ${i + 1}/${document.chunks.length}. Stopping stream.`
+              );
+              controller.close();
+              return; // Exit early - don't process remaining chunks
+            }
+
             const chunk = document.chunks[i];
             const chunkId = `${documentId}#${chunk.index}`;
 
@@ -136,8 +145,16 @@ export async function GET(request: NextRequest) {
               // Strip WAV header (we already sent the master header)
               const pcmData = stripWAVHeader(result.audioBuffer);
 
-              // Send PCM data immediately
-              controller.enqueue(new Uint8Array(pcmData));
+              // Send PCM data immediately (may fail if client disconnected)
+              try {
+                controller.enqueue(new Uint8Array(pcmData));
+              } catch (enqueueError) {
+                console.log(
+                  `[stream] Failed to enqueue chunk ${i + 1} - client likely disconnected`
+                );
+                controller.close();
+                return; // Stop processing
+              }
 
               console.log(
                 `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${(pcmData.length / 1024).toFixed(1)}KB, cached: ${result.cached})`
@@ -164,7 +181,7 @@ export async function GET(request: NextRequest) {
           // Step 3: Close the stream
           controller.close();
           console.log(
-            `[stream] Stream complete for document ${documentId}`
+            `[stream] ✅ Stream completed successfully for document ${documentId} (${document.chunks.length} chunks)`
           );
         } catch (error) {
           console.error("[stream] Stream error:", error);
