@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/prisma";
-import { clearDocumentAudioCache } from "@/lib/tts/piper";
-import fs from "fs/promises";
+import {
+  getDocumentById,
+  deleteDocumentWithCleanup,
+} from "@/lib/services/documentService";
 
 // GET /api/documents/[id]
 // Returns document status and metadata. Used by the frontend to poll
@@ -12,22 +14,7 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const document = await prisma.document.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      title: true,
-      fileName: true,
-      fileSize: true,
-      pageCount: true,
-      status: true,
-      createdAt: true,
-      errorMessage: true,
-      errorCode: true,
-      failedAt: true,
-      _count: { select: { chunks: true } },
-    },
-  });
+  const document = await getDocumentById(id, prisma);
 
   if (!document) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
@@ -48,54 +35,22 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // ── Step 1: Load document with chunks ─────────────────────────────────
-    const document = await prisma.document.findUnique({
-      where: { id },
-      include: { chunks: { select: { text: true } } },
-    });
+    const result = await deleteDocumentWithCleanup(id, prisma);
 
-    if (!document) {
+    if (!result) {
       return NextResponse.json(
         { error: "Document not found" },
         { status: 404 }
       );
     }
 
-    // ── Step 2: Delete cached audio files ─────────────────────────────────
-    const chunkTexts = document.chunks.map((c) => c.text);
-    const deletedAudioFiles = await clearDocumentAudioCache(chunkTexts);
-
-    console.log(
-      `[delete] Cleared ${deletedAudioFiles} audio cache files for document ${id}`
-    );
-
-    // ── Step 3: Delete PDF file from disk ─────────────────────────────────
-    try {
-      await fs.unlink(document.fileUrl);
-      console.log(`[delete] Deleted PDF file: ${document.fileUrl}`);
-    } catch (error) {
-      console.warn(
-        `[delete] Failed to delete PDF file (may not exist): ${document.fileUrl}`,
-        error
-      );
-      // Don't fail the whole deletion if file doesn't exist
-    }
-
-    // ── Step 4: Delete document from database ─────────────────────────────
-    // This also cascades to delete all chunks (via Prisma schema)
-    await prisma.document.delete({ where: { id } });
-
-    console.log(
-      `[delete] Deleted document ${id} (${document.chunks.length} chunks, ${deletedAudioFiles} audio files)`
-    );
-
     return NextResponse.json({
       message: "Document deleted successfully",
       deleted: {
-        document: id,
-        chunks: document.chunks.length,
-        audioFiles: deletedAudioFiles,
-        pdfFile: document.fileUrl,
+        document: result.documentId,
+        chunks: result.chunksDeleted,
+        audioFiles: result.audioFilesDeleted,
+        pdfFile: result.pdfPath,
       },
     });
   } catch (error) {
@@ -104,9 +59,6 @@ export async function DELETE(
     const message =
       error instanceof Error ? error.message : "Failed to delete document";
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

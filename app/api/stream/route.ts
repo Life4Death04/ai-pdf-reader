@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/prisma";
-import { generateAudio } from "@/lib/tts/piper";
+import type { ProcessingMode } from "@/types";
 import {
-  createWAVHeader,
-  stripWAVHeader,
-  generateSilence,
-  estimateAudioDuration,
-  calculateAudioSize,
-} from "@/lib/tts/wav-utils";
-import { DocumentStatus, ProcessingMode } from "@/types";
+  isValidProcessingMode,
+  loadDocumentForStreaming,
+  createStreamHeader,
+  processChunkForStream,
+  createStreamHeaders,
+} from "@/lib/services/streamService";
 
 /**
  * GET /api/stream?documentId={id}&mode={FULL_TEXT|SUMMARY|PODCAST}
@@ -45,8 +44,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const mode = modeParam.toUpperCase() as ProcessingMode;
-    if (!["FULL_TEXT", "SUMMARY", "PODCAST"].includes(mode)) {
+    if (!isValidProcessingMode(modeParam)) {
       return NextResponse.json(
         {
           error: "Invalid mode. Must be FULL_TEXT, SUMMARY, or PODCAST",
@@ -55,43 +53,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const mode = modeParam.toUpperCase() as ProcessingMode;
+
     // ── Load document and chunks ───────────────────────────────────────────
-    const document = await prisma.document.findUnique({
-      where: { id: documentId },
-      include: {
-        chunks: {
-          where: { mode },
-          orderBy: { index: "asc" },
-        },
-      },
-    });
+    const validation = await loadDocumentForStreaming(documentId, mode, prisma);
 
-    if (!document) {
+    if (!validation.valid || !validation.document) {
       return NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 }
+        { error: validation.error },
+        { status: validation.statusCode }
       );
     }
 
-    if (document.status !== DocumentStatus.READY) {
-      return NextResponse.json(
-        {
-          error: `Document not ready (status: ${document.status})`,
-          status: document.status,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (document.chunks.length === 0) {
-      return NextResponse.json(
-        {
-          error: "No chunks found for this document and mode",
-          hint: "Document may need reprocessing for this mode",
-        },
-        { status: 404 }
-      );
-    }
+    const document = validation.document;
 
     console.log(
       `[stream] Starting stream for doc ${documentId} (${document.chunks.length} chunks, mode: ${mode})`
@@ -101,22 +75,13 @@ export async function GET(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Step 1: Estimate total audio size and send WAV header
-          const totalText = document.chunks
-            .map((c) => c.text)
-            .join(" ")
-            .length;
-          const estimatedDuration = estimateAudioDuration(totalText);
-          const estimatedSize = calculateAudioSize(estimatedDuration);
-          const wavHeader = createWAVHeader(estimatedSize);
-
+          // Step 1: Send WAV header
+          const wavHeader = createStreamHeader(document.chunks);
           controller.enqueue(new Uint8Array(wavHeader));
 
-          console.log(
-            `[stream] WAV header sent (estimated: ${estimatedDuration}s, ${(estimatedSize / 1024 / 1024).toFixed(2)}MB)`
-          );
+          console.log(`[stream] WAV header sent`);
 
-          // Step 2: Stream each chunk's audio (generate TTS for all chunks)
+          // Step 2: Stream each chunk's audio
           for (let i = 0; i < document.chunks.length; i++) {
             // Check if client disconnected before processing next chunk
             if (request.signal?.aborted) {
@@ -124,56 +89,41 @@ export async function GET(request: NextRequest) {
                 `[stream] ⚠️  Client disconnected at chunk ${i + 1}/${document.chunks.length}. Stopping stream.`
               );
               controller.close();
-              return; // Exit early - don't process remaining chunks
+              return;
             }
 
             const chunk = document.chunks[i];
-            const chunkId = `${documentId}#${chunk.index}`;
+            const result = await processChunkForStream(
+              chunk,
+              documentId,
+              i
+            );
 
+            // Send PCM data (may fail if client disconnected)
             try {
-              console.log(
-                `[stream] Processing chunk ${i + 1}/${document.chunks.length} (${chunkId}) with TTS`
-              );
-
-              // Generate audio for this chunk
-              const result = await generateAudio({
-                text: chunk.text,
-                chunkId: chunkId,
-                chunkIndex: i,
-              });
-
-              // Strip WAV header (we already sent the master header)
-              const pcmData = stripWAVHeader(result.audioBuffer);
-
-              // Send PCM data immediately (may fail if client disconnected)
-              try {
-                controller.enqueue(new Uint8Array(pcmData));
-              } catch (enqueueError) {
-                console.log(
-                  `[stream] Failed to enqueue chunk ${i + 1} - client likely disconnected`
-                );
-                controller.close();
-                return; // Stop processing
+              if (result.pcmData) {
+                controller.enqueue(new Uint8Array(result.pcmData));
               }
-
+            } catch (enqueueError) {
               console.log(
-                `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${(pcmData.length / 1024).toFixed(1)}KB, cached: ${result.cached})`
+                `[stream] Failed to enqueue chunk ${i + 1} - client likely disconnected`
               );
-            } catch (error) {
-              // TTS failed — insert silence as fallback
+              controller.close();
+              return;
+            }
+
+            // Log result
+            if (result.error) {
               console.error(
                 `[stream] Chunk ${i + 1}/${document.chunks.length} TTS failed:`,
-                error
+                result.error
               );
-
-              // Estimate chunk duration based on text length
-              const chunkDuration = estimateAudioDuration(chunk.text.length);
-              const silenceBuffer = generateSilence(chunkDuration);
-
-              controller.enqueue(new Uint8Array(silenceBuffer));
-
               console.warn(
-                `[stream] Inserted ${chunkDuration}s of silence for failed chunk ${chunkId}`
+                `[stream] Inserted silence for failed chunk ${documentId}#${chunk.index}`
+              );
+            } else {
+              console.log(
+                `[stream] Chunk ${i + 1}/${document.chunks.length} sent (${((result.pcmData?.length ?? 0) / 1024).toFixed(1)}KB, cached: ${result.cached ?? false})`
               );
             }
           }
@@ -192,14 +142,7 @@ export async function GET(request: NextRequest) {
 
     // Return streaming response
     return new Response(stream, {
-      headers: {
-        "Content-Type": "audio/wav",
-        "X-Document-Id": documentId,
-        "X-Processing-Mode": mode,
-        "X-Total-Chunks": document.chunks.length.toString(),
-        "Cache-Control": "no-cache", // Don't cache the full stream (individual chunks are cached)
-        // Note: Content-Length is omitted — this signals chunked transfer encoding
-      },
+      headers: createStreamHeaders(documentId, mode, document.chunks.length),
     });
   } catch (error) {
     console.error("[stream] Error:", error);
