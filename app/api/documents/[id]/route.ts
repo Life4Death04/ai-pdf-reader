@@ -4,45 +4,34 @@ import {
   getDocumentById,
   deleteDocumentWithCleanup,
 } from "@/lib/services/documentService";
+import { withErrorHandler, assertFound } from "@/lib/errors/errorHandler";
+import { NotFoundError } from "@/lib/errors/AppError";
 
 // GET /api/documents/[id]
 // Returns document status and metadata. Used by the frontend to poll
 // for processing completion after upload.
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export const GET = withErrorHandler(
+  async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
 
-  const document = await getDocumentById(id, prisma);
+    const document = await getDocumentById(id, prisma);
+    assertFound(document, "Document not found", { documentId: id });
 
-  if (!document) {
-    return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    return NextResponse.json({ data: document });
   }
-
-  return NextResponse.json({ data: document });
-}
+);
 
 // DELETE /api/documents/[id]
 // Deletes a document and all associated resources:
 // - Database record (chunks cascade automatically via Prisma schema)
 // - PDF file from disk
 // - Cached audio files
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const DELETE = withErrorHandler(
+  async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
 
     const result = await deleteDocumentWithCleanup(id, prisma);
-
-    if (!result) {
-      return NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 }
-      );
-    }
+    assertFound(result, "Document not found", { documentId: id });
 
     return NextResponse.json({
       message: "Document deleted successfully",
@@ -53,12 +42,5 @@ export async function DELETE(
         pdfFile: result.pdfPath,
       },
     });
-  } catch (error) {
-    console.error("[delete] Error:", error);
-
-    const message =
-      error instanceof Error ? error.message : "Failed to delete document";
-
-    return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+);

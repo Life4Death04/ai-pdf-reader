@@ -8,6 +8,8 @@ import {
   processChunkForStream,
   createStreamHeaders,
 } from "@/lib/services/streamService";
+import { withErrorHandler, assertValid } from "@/lib/errors/errorHandler";
+import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
 
 /**
  * GET /api/stream?documentId={id}&mode={FULL_TEXT|SUMMARY|PODCAST}
@@ -30,46 +32,37 @@ import {
  *   - Transfer-Encoding: chunked (streaming)
  *   - Body: Complete WAV file (single header + concatenated PCM data)
  */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = request.nextUrl;
-    const documentId = searchParams.get("documentId");
-    const modeParam = searchParams.get("mode") || "FULL_TEXT";
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = request.nextUrl;
+  const documentId = searchParams.get("documentId");
+  const modeParam = searchParams.get("mode") || "FULL_TEXT";
 
-    // ── Validation ─────────────────────────────────────────────────────────
-    if (!documentId) {
-      return NextResponse.json(
-        { error: "Missing documentId parameter" },
-        { status: 400 }
-      );
-    }
+  // ── Validation ─────────────────────────────────────────────────────────
+  assertValid(documentId, "Missing documentId parameter");
 
-    if (!isValidProcessingMode(modeParam)) {
-      return NextResponse.json(
-        {
-          error: "Invalid mode. Must be FULL_TEXT, SUMMARY, or PODCAST",
-        },
-        { status: 400 }
-      );
-    }
-
-    const mode = modeParam.toUpperCase() as ProcessingMode;
-
-    // ── Load document and chunks ───────────────────────────────────────────
-    const validation = await loadDocumentForStreaming(documentId, mode, prisma);
-
-    if (!validation.valid || !validation.document) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: validation.statusCode }
-      );
-    }
-
-    const document = validation.document;
-
-    console.log(
-      `[stream] Starting stream for doc ${documentId} (${document.chunks.length} chunks, mode: ${mode})`
+  if (!isValidProcessingMode(modeParam)) {
+    throw new ValidationError(
+      "Invalid mode. Must be FULL_TEXT, SUMMARY, or PODCAST"
     );
+  }
+
+  const mode = modeParam.toUpperCase() as ProcessingMode;
+
+  // ── Load document and chunks ───────────────────────────────────────────
+  const validation = await loadDocumentForStreaming(documentId, mode, prisma);
+
+  if (!validation.valid || !validation.document) {
+    if (validation.statusCode === 404) {
+      throw new NotFoundError(validation.error);
+    }
+    throw new ValidationError(validation.error ?? "Failed to load document");
+  }
+
+  const document = validation.document;
+
+  console.log(
+    `[stream] Starting stream for doc ${documentId} (${document.chunks.length} chunks, mode: ${mode})`
+  );
 
     // ── Create streaming response ──────────────────────────────────────────
     const stream = new ReadableStream({
@@ -140,25 +133,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Return streaming response
-    return new Response(stream, {
-      headers: createStreamHeaders(documentId, mode, document.chunks.length),
-    });
-  } catch (error) {
-    console.error("[stream] Error:", error);
-
-    const message =
-      error instanceof Error ? error.message : "Streaming failed";
-
-    return NextResponse.json(
-      {
-        error: message,
-        details: "Check server logs for more information",
-      },
-      { status: 500 }
-    );
-  }
-}
+  // Return streaming response
+  return new Response(stream, {
+    headers: createStreamHeaders(documentId, mode, document.chunks.length),
+  });
+});
 
 // ─────────────────────────────────────────────
 // Future Enhancement: Progress Tracking
