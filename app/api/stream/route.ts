@@ -10,6 +10,8 @@ import {
 } from "@/lib/services/streamService";
 import { withErrorHandler, assertValid } from "@/lib/errors/errorHandler";
 import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
+import { rateLimiters } from "@/lib/security/rateLimit";
+import { withRequestLogging } from "@/lib/monitoring/requestLogger";
 
 /**
  * GET /api/stream?documentId={id}&mode={FULL_TEXT|SUMMARY|PODCAST}
@@ -32,8 +34,12 @@ import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
  *   - Transfer-Encoding: chunked (streaming)
  *   - Body: Complete WAV file (single header + concatenated PCM data)
  */
-export const GET = withErrorHandler(async (request: NextRequest) => {
-  const { searchParams } = request.nextUrl;
+export const GET = withRequestLogging(
+  withErrorHandler(async (request: NextRequest) => {
+    // ── Rate limiting ───────────────────────────────────────────────────────
+    await rateLimiters.standard(request);
+
+    const { searchParams } = request.nextUrl;
   const documentId = searchParams.get("documentId");
   const modeParam = searchParams.get("mode") || "FULL_TEXT";
 
@@ -133,11 +139,12 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       },
     });
 
-  // Return streaming response
-  return new Response(stream, {
-    headers: createStreamHeaders(documentId, mode, document.chunks.length),
-  });
-});
+    // Return streaming response
+    return new Response(stream, {
+      headers: createStreamHeaders(documentId, mode, document.chunks.length),
+    });
+  })
+);
 
 // ─────────────────────────────────────────────
 // Future Enhancement: Progress Tracking

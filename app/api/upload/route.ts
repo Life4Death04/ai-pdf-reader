@@ -13,28 +13,28 @@ import {
   UnsupportedMediaTypeError,
   PayloadTooLargeError,
 } from "@/lib/errors/AppError";
+import { rateLimiters, getClientIp } from "@/lib/security/rateLimit";
+import { validatePdfFile } from "@/lib/security/fileValidation";
+import { logAudit } from "@/lib/monitoring/audit";
+import { withRequestLogging } from "@/lib/monitoring/requestLogger";
 
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  // ── Parse multipart form data (native Web API in Next.js App Router) ──
-  const formData = await request.formData();
-  const file = formData.get("file");
+export const POST = withRequestLogging(
+  withErrorHandler(async (request: NextRequest) => {
+    // ── Rate limiting (3 uploads per 5 minutes per IP) ──
+    await rateLimiters.upload(request);
 
-  if (!file || !(file instanceof File)) {
-    throw new ValidationError("No file provided");
-  }
+    // ── Parse multipart form data (native Web API in Next.js App Router) ──
+    const formData = await request.formData();
+    const file = formData.get("file");
 
-  // ── Validate file ──────────────────────────────────────────────────────
-  const validation = validateFile(file);
-  if (!validation.valid) {
-    // Map validation to proper error types
-    if (validation.statusCode === 415) {
-      throw new UnsupportedMediaTypeError(validation.error);
+    if (!file || !(file instanceof File)) {
+      throw new ValidationError("No file provided");
     }
-    if (validation.statusCode === 413) {
-      throw new PayloadTooLargeError(validation.error);
-    }
-    throw new ValidationError(validation.error ?? "File validation failed");
-  }
+
+    // ── Advanced file validation (magic bytes, size, type) ──
+    await validatePdfFile(file);
+
+
 
   // ── Save file to disk ──────────────────────────────────────────────────
   const fileInfo = await saveFileToDisk(file);
@@ -55,19 +55,35 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     prisma
   );
 
-  // ── Fire-and-forget background processing ─────────────────────────────
-  // We do NOT await this. The response is sent immediately and processing
-  // continues in the background, updating document.status as it progresses.
-  void runBackgroundProcessing(document.id);
+    // ── Fire-and-forget background processing ─────────────────────────────
+    // We do NOT await this. The response is sent immediately and processing
+    // continues in the background, updating document.status as it progresses.
+    void runBackgroundProcessing(document.id);
 
-  return NextResponse.json(
-    {
-      data: {
-        documentId: document.id,
+    // ── Audit log ──────────────────────────────────────────────────────────
+    logAudit({
+      action: "document.upload",
+      userId: user.id,
+      ip: getClientIp(request),
+      resourceId: document.id,
+      resourceType: "document",
+      metadata: {
+        fileName: file.name,
+        fileSize: file.size,
         title: document.title,
-        status: document.status,
       },
-    },
-    { status: 201 }
-  );
-});
+      success: true,
+    });
+
+    return NextResponse.json(
+      {
+        data: {
+          documentId: document.id,
+          title: document.title,
+          status: document.status,
+        },
+      },
+      { status: 201 }
+    );
+  })
+);
