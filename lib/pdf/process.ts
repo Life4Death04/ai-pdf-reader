@@ -1,18 +1,24 @@
 import fs from "fs/promises";
-import path from "path";
 import { prisma } from "@/lib/prisma/prisma";
 import { extractTextFromPDF } from "@/lib/pdf/extract";
 import { chunkTextWithFiltering } from "@/lib/chunker/chunk";
 import { rewriteChunk, checkOllamaHealth, warmupModel } from "@/lib/ai/rewrite";
 import { DocumentStatus } from "../../generated/prisma";
+import { asyncPoolWithProgress } from "@/lib/utils/asyncPool";
+import { createErrorDetails } from "@/lib/utils/errorClassifier";
 
 /**
- * Processes a document through the full pipeline:
+ * FAST PATH: Processes a document through extraction and chunking only.
  *   UPLOADED → EXTRACTING → CHUNKING → READY (or ERROR on failure)
  *
- * This function runs asynchronously after the upload response is sent.
- * It updates the document status in the DB at each step so the frontend
- * can poll and show progress.
+ * This function:
+ * 1. Extracts text from PDF (2-5 seconds)
+ * 2. Chunks the text (instant)
+ * 3. Saves chunks to database
+ * 4. Marks document as READY
+ *
+ * AI rewriting is handled separately by rewriteDocumentChunks() to avoid
+ * blocking document availability for 30-60 minutes.
  *
  * Why run it in the background (fire-and-forget)?
  * - PDF extraction on a large document can take 5–30 seconds.
@@ -53,72 +59,14 @@ export async function processDocument(documentId: string): Promise<void> {
     // Uses page-level filtering to remove ToC, Index, References, etc.
     const chunks = chunkTextWithFiltering(text);
 
-    console.log(`[process] Generated ${chunks.length} chunks`);
+    console.log(`[process] Generated ${chunks.length} chunks for document ${documentId}`);
 
-    // ── Step 4: AI Rewrite Chunks (Optional) ──────────────────────────────
-    // Transforms chunks into natural audiobook-style narration
-    // This step is OPTIONAL - controlled by environment variable
-    const shouldRewrite = process.env.ENABLE_AI_REWRITE === "true";
-    let finalChunks = chunks;
-
-    if (shouldRewrite) {
-      console.log("[process] AI rewrite enabled - checking Ollama health...");
-      
-      const ollamaHealthy = await checkOllamaHealth();
-      
-      if (ollamaHealthy) {
-        console.log("[process] Ollama healthy - starting rewrite process...");
-        
-        // Update status to show we're rewriting
-        await prisma.document.update({
-          where: { id: documentId },
-          data: { status: DocumentStatus.CHUNKING }, // We'll use CHUNKING status for rewriting too
-        });
-
-        // ── Warmup: Pre-load model into memory ──────────────────────────────
-        console.log("[process] Warming up model...");
-        await warmupModel();
-
-        // Rewrite each chunk sequentially
-        const rewrittenTexts: string[] = [];
-        for (let i = 0; i < chunks.length; i++) {
-          const chunk = chunks[i];
-          console.log(`\n[process] Rewriting chunk ${i + 1}/${chunks.length} (${chunk.text.length} chars)`);
-          
-          const rewritten = await rewriteChunk(chunk.text, {
-            mode: "podcast", // Default mode - can be made configurable later
-            skipShort: true,
-          });
-          
-          rewrittenTexts.push(rewritten);
-          
-          // Log progress every 10 chunks
-          if ((i + 1) % 10 === 0) {
-            console.log(`[process] Progress: ${i + 1}/${chunks.length} chunks rewritten`);
-          }
-        }
-
-        // Replace chunk texts with rewritten versions
-        finalChunks = chunks.map((chunk, index) => ({
-          ...chunk,
-          text: rewrittenTexts[index],
-          // Recalculate token count for rewritten text
-          tokenCount: Math.ceil(rewrittenTexts[index].length / 4),
-        }));
-
-        console.log(`\n[process] ✅ All chunks rewritten successfully`);
-      } else {
-        console.log("[process] ⚠️  Ollama not available - skipping rewrite, using original chunks");
-      }
-    } else {
-      console.log("[process] AI rewrite disabled (set ENABLE_AI_REWRITE=true to enable)");
-    }
-
-    // ── Step 5: Save Chunks to Database ───────────────────────────────────
+    // ── Step 4: Save Chunks to Database ───────────────────────────────────
+    // Save ORIGINAL text chunks (rewriting happens separately if enabled)
     // Batch-insert all chunks. We use createMany for efficiency — one round
     // trip instead of N inserts. skipDuplicates protects against retries.
     await prisma.textChunk.createMany({
-      data: finalChunks.map((chunk) => ({
+      data: chunks.map((chunk) => ({
         documentId,
         index: chunk.index,
         text: chunk.text,
@@ -127,44 +75,163 @@ export async function processDocument(documentId: string): Promise<void> {
       skipDuplicates: true,
     });
 
-    // ── Step 6: Mark as ready ──────────────────────────────────────────────
+    // ── Step 5: Mark as READY ──────────────────────────────────────────────
+    // Document is now immediately usable! Users can start listening to original text.
     await prisma.document.update({
       where: { id: documentId },
       data: { status: DocumentStatus.READY },
     });
 
     console.log(
-      `[process] Document ${documentId} ready — ${finalChunks.length} chunks, ${pageCount} pages`
+      `[process] ✅ Document ${documentId} READY — ${chunks.length} chunks, ${pageCount} pages`
+    );
+    console.log(
+      `[process] Processing completed in fast path. AI rewriting can be triggered separately if enabled.`
     );
   } catch (error) {
     console.error(`[process] Failed to process document ${documentId}:`, error);
 
-    // Best-effort status update — don't throw (we're in a fire-and-forget context)
+    // Classify error and get details
+    const { errorCode, errorMessage } = createErrorDetails(error);
+    
+    console.error(`[process] Error classified as: ${errorCode}`);
+    console.error(`[process] User-facing message: ${errorMessage}`);
+
+    // Update document with error details
     await prisma.document
       .update({
         where: { id: documentId },
-        data: { status: DocumentStatus.ERROR },
+        data: { 
+          status: DocumentStatus.ERROR,
+          errorMessage,
+          errorCode,
+          failedAt: new Date(),
+        },
       })
-      .catch(() => {});
+      .catch((dbError) => {
+        // If we can't even update the database, log it but don't throw
+        console.error(`[process] Failed to update error status in database:`, dbError);
+      });
   }
 }
 
-// ─────────────────────────────────────────────
-// File storage helpers (used by the upload route)
-// ─────────────────────────────────────────────
-
-export function getUploadDir(): string {
-  return path.resolve(process.cwd(), process.env.UPLOAD_DIR ?? "uploads");
-}
-
-export function buildFilePath(uploadDir: string, fileName: string): string {
-  return path.join(uploadDir, fileName);
-}
-
 /**
- * Ensures the upload directory exists. Called once at startup or on first upload.
+ * SLOW PATH: Rewrites all chunks of a document for better audiobook narration.
+ * 
+ * This function runs INDEPENDENTLY from processDocument() and does not block
+ * document availability. It:
+ * 1. Loads all chunks for the document
+ * 2. Rewrites them in parallel (3 at a time) using Ollama
+ * 3. Updates the 'processed' field with rewritten text
+ * 
+ * Users can listen to original text immediately, and rewritten versions appear
+ * gradually as they're processed. On subsequent playback in AUDIOBOOK mode,
+ * the rewritten versions will be used.
+ * 
+ * @param documentId - ID of the document to rewrite
+ * @param options - Configuration options
  */
-export async function ensureUploadDir(): Promise<void> {
-  const dir = getUploadDir();
-  await fs.mkdir(dir, { recursive: true });
+export async function rewriteDocumentChunks(
+  documentId: string,
+  options: {
+    mode?: "audiobook" | "formal";
+    concurrency?: number;
+  } = {}
+): Promise<void> {
+  const { mode = "audiobook", concurrency = 3 } = options;
+
+  try {
+    console.log("\n" + "=".repeat(70));
+    console.log(`🎙️  STARTING AI REWRITE FOR DOCUMENT ${documentId}`);
+    console.log("=".repeat(70));
+
+    // ── Step 1: Check Ollama availability ─────────────────────────────────
+    console.log("[rewrite] Checking Ollama health...");
+    const ollamaHealthy = await checkOllamaHealth();
+
+    if (!ollamaHealthy) {
+      console.log("[rewrite] ⚠️  Ollama not available - aborting rewrite");
+      return;
+    }
+
+    console.log("[rewrite] ✅ Ollama is healthy");
+
+    // ── Step 2: Load chunks ───────────────────────────────────────────────
+    const chunks = await prisma.textChunk.findMany({
+      where: { documentId },
+      orderBy: { index: "asc" },
+    });
+
+    console.log(`[rewrite] Loaded ${chunks.length} chunks`);
+
+    if (chunks.length === 0) {
+      console.log("[rewrite] No chunks found - nothing to rewrite");
+      return;
+    }
+
+    // ── Step 3: Warmup model ──────────────────────────────────────────────
+    console.log("[rewrite] Warming up Ollama model...");
+    await warmupModel();
+    console.log("[rewrite] ✅ Model warmed up");
+
+    // ── Step 4: Rewrite chunks in parallel ────────────────────────────────
+    console.log(`[rewrite] Starting parallel rewrite (concurrency: ${concurrency})...\n`);
+
+    let completed = 0;
+    const total = chunks.length;
+    const startTime = Date.now();
+
+    await asyncPoolWithProgress(
+      concurrency,
+      chunks,
+      async (chunk, index) => {
+        // Skip already rewritten chunks
+        if (chunk.processed) {
+          console.log(`[rewrite] Chunk ${index + 1}/${total} already rewritten, skipping`);
+          return;
+        }
+
+        try {
+          // Rewrite the chunk
+          const rewritten = await rewriteChunk(chunk.text, {
+            mode,
+            skipShort: true,
+          });
+
+          // Save rewritten version to database
+          await prisma.textChunk.update({
+            where: { id: chunk.id },
+            data: { processed: rewritten },
+          });
+
+          console.log(`[rewrite] ✅ Chunk ${index + 1}/${total} rewritten and saved`);
+        } catch (error) {
+          console.error(`[rewrite] ❌ Failed to rewrite chunk ${index + 1}/${total}:`, error);
+          // Continue with other chunks - don't fail the whole batch
+        }
+      },
+      (completed, total) => {
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+        const percent = ((completed / total) * 100).toFixed(1);
+        
+        if (completed % 5 === 0 || completed === total) {
+          console.log(
+            `\n[rewrite] 📊 Progress: ${completed}/${total} (${percent}%) - ${elapsed}s elapsed\n`
+          );
+        }
+      }
+    );
+
+    // ── Step 5: Complete ──────────────────────────────────────────────────
+    const duration = ((Date.now() - startTime) / 1000 / 60).toFixed(2);
+
+    console.log("\n" + "=".repeat(70));
+    console.log(`🎉 REWRITE COMPLETE FOR DOCUMENT ${documentId}`);
+    console.log(`   Duration: ${duration} minutes`);
+    console.log(`   Chunks processed: ${total}`);
+    console.log("=".repeat(70) + "\n");
+  } catch (error) {
+    console.error(`[rewrite] Failed to rewrite document ${documentId}:`, error);
+    // Don't throw - this is a background task
+  }
 }

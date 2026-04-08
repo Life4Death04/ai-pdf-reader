@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAudio } from "@/lib/tts/piper";
+import { withErrorHandler, assertValid } from "@/lib/errors/errorHandler";
+import { ValidationError } from "@/lib/errors/AppError";
+import { rateLimiters } from "@/lib/security/rateLimit";
+import { withRequestLogging } from "@/lib/monitoring/requestLogger";
+import { z } from "zod";
 
 /**
  * POST /api/tts
@@ -17,24 +22,18 @@ import { generateAudio } from "@/lib/tts/piper";
  *   - Success: WAV audio file (Content-Type: audio/wav)
  *   - Error: JSON with error message
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withRequestLogging(
+  withErrorHandler(async (request: NextRequest) => {
+    await rateLimiters.standard(request);
+
     const body = await request.json();
     const { text, voice, speed } = body;
 
     // ── Validation ─────────────────────────────────────────────────────────
-    if (!text || typeof text !== "string") {
-      return NextResponse.json(
-        { error: "Missing or invalid 'text' field" },
-        { status: 400 }
-      );
-    }
+    assertValid(text && typeof text === "string", "Missing or invalid 'text' field");
 
     if (text.length > 5000) {
-      return NextResponse.json(
-        { error: "Text too long (max 5000 characters per request)" },
-        { status: 400 }
-      );
+      throw new ValidationError("Text too long (max 5000 characters per request)");
     }
 
     // ── Generate audio ─────────────────────────────────────────────────────
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
     // ── Return audio file ──────────────────────────────────────────────────
     // Convert Buffer to Uint8Array for NextResponse compatibility
     const audioData = new Uint8Array(result.audioBuffer);
-    
+
     return new NextResponse(audioData, {
       status: 200,
       headers: {
@@ -56,19 +55,5 @@ export async function POST(request: NextRequest) {
         "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
       },
     });
-  } catch (error) {
-    console.error("[api/tts] Error:", error);
-
-    const message =
-      error instanceof Error ? error.message : "TTS generation failed";
-
-    return NextResponse.json(
-      {
-        error: message,
-        details:
-          "Make sure Piper HTTP server is running on the configured port",
-      },
-      { status: 500 }
-    );
-  }
-}
+  })
+);

@@ -58,12 +58,21 @@ model Document {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  // Error tracking (populated when status = ERROR)
+  errorMessage String? // Human-readable error description
+  errorCode    String? // Machine-readable error code (PDF_PARSE_FAILED, etc.)
+  failedAt     DateTime? // Timestamp when error occurred
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   chunks           TextChunk[]
   playbackProgress PlaybackProgress[]
 
+  // Performance indexes
+  @@index([userId, createdAt(sort: Desc)]) // Dashboard: user's documents, newest first
+  @@index([status]) // Find documents by status (ERROR, READY, etc.)
+  @@index([createdAt]) // Admin queries and cleanup tasks
   @@map("documents")
 }
 
@@ -105,5 +114,7 @@ model PlaybackProgress {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, documentId]) // one progress record per (user, document)
+  @@index([userId, documentId, mode]) // Fast progress lookup
+  @@index([updatedAt]) // Analytics and cleanup queries
   @@map("playback_progress")
 }

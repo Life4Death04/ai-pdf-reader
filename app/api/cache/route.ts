@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { clearAudioCache, getAudioCacheSize } from "@/lib/tts/piper";
+import { withErrorHandler, assertValid } from "@/lib/errors/errorHandler";
+import { rateLimiters, getClientIp } from "@/lib/security/rateLimit";
+import { logAudit } from "@/lib/monitoring/audit";
+import { withRequestLogging } from "@/lib/monitoring/requestLogger";
 
 /**
  * GET /api/cache/stats
  * Returns statistics about the audio cache.
  */
-export async function GET() {
-  try {
+export const GET = withRequestLogging(
+  withErrorHandler(async (request: NextRequest) => {
+    await rateLimiters.relaxed(request);
+
     const stats = await getAudioCacheSize();
 
     return NextResponse.json({
@@ -16,47 +22,40 @@ export async function GET() {
           ? "Cache size exceeds 1GB. Consider clearing old files."
           : null,
     });
-  } catch (error) {
-    console.error("[cache/stats] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to get cache stats" },
-      { status: 500 }
-    );
-  }
-}
+  })
+);
 
 /**
  * DELETE /api/cache/clear
  * Clears all cached audio files.
  * Use with caution - this will force regeneration of all audio!
  */
-export async function DELETE(request: NextRequest) {
-  try {
+export const DELETE = withRequestLogging(
+  withErrorHandler(async (request: NextRequest) => {
+    await rateLimiters.strict(request);
+
     const { searchParams } = request.nextUrl;
     const confirm = searchParams.get("confirm");
 
     // Require confirmation to prevent accidental deletion
-    if (confirm !== "true") {
-      return NextResponse.json(
-        {
-          error: "Confirmation required",
-          hint: "Add ?confirm=true to the URL to clear cache",
-        },
-        { status: 400 }
-      );
-    }
+    assertValid(
+      confirm === "true",
+      "Confirmation required. Add ?confirm=true to the URL to clear cache"
+    );
 
     const deletedCount = await clearAudioCache();
+
+    // ── Audit log ──────────────────────────────────────────────────────────
+    logAudit({
+      action: "cache.clear",
+      ip: getClientIp(request),
+      metadata: { deletedCount },
+      success: true,
+    });
 
     return NextResponse.json({
       message: "Cache cleared successfully",
       deletedFiles: deletedCount,
     });
-  } catch (error) {
-    console.error("[cache/clear] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to clear cache" },
-      { status: 500 }
-    );
-  }
-}
+  })
+);
