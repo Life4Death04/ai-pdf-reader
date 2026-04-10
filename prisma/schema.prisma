@@ -55,6 +55,7 @@ model Document {
   pageCount     Int?
   extractedText String?        @db.Text
   status        DocumentStatus @default(UPLOADED)
+  audioDuration Float?         // Total audio duration in seconds (for FULL_TEXT mode)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -67,6 +68,7 @@ model Document {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   chunks           TextChunk[]
+  audioChunks      AudioChunk[]
   playbackProgress PlaybackProgress[]
 
   // Performance indexes
@@ -89,6 +91,7 @@ model TextChunk {
   mode       ProcessingMode  @default(FULL_TEXT)
   processed  String?         @db.Text  // AI-rewritten text (null = not yet processed)
   audioPath  String?         // path to cached .wav file on disk
+  audioDuration Float?        // Duration of this chunk's audio in seconds
   createdAt  DateTime        @default(now())
 
   documentId String
@@ -96,6 +99,24 @@ model TextChunk {
 
   @@unique([documentId, index, mode]) // one cached audio per (doc, chunk, mode)
   @@map("text_chunks")
+}
+
+// Each AudioChunk represents a generated audio file stored in S3.
+// Used to avoid re-generating TTS audio for the same chunk.
+model AudioChunk {
+  id         String   @id @default(cuid())
+  s3Key      String   // S3 object key, e.g. "audio/{docId}/chunk-{index}.wav"
+  s3Url      String   // Full public URL for direct playback
+  duration   Float?   // Audio duration in seconds (parsed from WAV header)
+  createdAt  DateTime @default(now())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int      // Matches TextChunk.index (0-based)
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId, chunkIndex])
+  @@map("audio_chunks")
 }
 
 // Stores where the user stopped listening.

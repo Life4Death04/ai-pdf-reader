@@ -85,6 +85,20 @@ export async function processDocument(documentId: string): Promise<void> {
     console.log(
       `[process] ✅ Document ${documentId} READY — ${chunks.length} chunks, ${pageCount} pages`
     );
+    
+    // ── Step 6: Calculate audio duration for FULL_TEXT mode ───────────────
+    // This provides an estimated duration for the audio player
+    try {
+      const { calculateDocumentDuration } = await import("@/lib/services/documentService");
+      const duration = await calculateDocumentDuration(documentId, "FULL_TEXT", prisma);
+      if (duration) {
+        console.log(`[process] 📊 Calculated audio duration: ${duration.toFixed(2)}s (${(duration / 60).toFixed(2)} minutes)`);
+      }
+    } catch (durationError) {
+      console.error(`[process] Failed to calculate duration (non-critical):`, durationError);
+      // Don't fail the whole process if duration calculation fails
+    }
+    
     console.log(
       `[process] Processing completed in fast path. AI rewriting can be triggered separately if enabled.`
     );

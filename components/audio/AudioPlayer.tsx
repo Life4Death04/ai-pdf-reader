@@ -1,44 +1,160 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
+
+interface AudioChunkInfo {
+  id: string;
+  chunkIndex: number;
+  s3Url: string;
+  duration: number | null;
+}
 
 interface AudioPlayerProps {
   documentId: string;
   title: string;
+  totalDuration?: number;
 }
 
-export function AudioPlayer({ documentId, title }: AudioPlayerProps) {
+export function AudioPlayer({ documentId, title, totalDuration }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const preloadRef = useRef<HTMLAudioElement | null>(null);
+
+  const [chunks, setChunks] = useState<AudioChunkInfo[]>([]);
+  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [useFallback, setUseFallback] = useState(false);
 
+  // Cumulative durations: cumulativeDurations[i] = total seconds before chunk i starts
+  const cumulativeDurations = useRef<number[]>([]);
+
+  const computedTotalDuration = totalDuration ?? chunks.reduce(
+    (sum, c) => sum + (c.duration ?? 0),
+    0
+  );
+
+  // Fetch audio chunks on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchChunks() {
+      try {
+        const res = await fetch(`/api/audio?docId=${documentId}`);
+        if (!res.ok) throw new Error("Failed to fetch audio chunks");
+
+        const json = await res.json();
+        const fetched: AudioChunkInfo[] = json.data?.chunks ?? [];
+
+        if (cancelled) return;
+
+        if (fetched.length === 0) {
+          setUseFallback(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // Compute cumulative durations
+        const cumulative: number[] = [0];
+        for (let i = 0; i < fetched.length; i++) {
+          cumulative.push(cumulative[i] + (fetched[i].duration ?? 0));
+        }
+        cumulativeDurations.current = cumulative;
+
+        setChunks(fetched);
+        setIsLoading(false);
+      } catch {
+        if (!cancelled) {
+          setUseFallback(true);
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchChunks();
+    return () => { cancelled = true; };
+  }, [documentId]);
+
+  // Preload next chunk when current chunk changes
+  useEffect(() => {
+    if (useFallback || chunks.length === 0) return;
+
+    const nextIndex = currentChunkIndex + 1;
+    if (nextIndex < chunks.length) {
+      const preload = new Audio(chunks[nextIndex].s3Url);
+      preload.preload = "auto";
+      preloadRef.current = preload;
+    } else {
+      preloadRef.current = null;
+    }
+  }, [currentChunkIndex, chunks, useFallback]);
+
+  // Set audio src when chunk changes
+  useEffect(() => {
+    if (useFallback || chunks.length === 0) return;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const wasPlaying = isPlaying;
+    audio.src = chunks[currentChunkIndex].s3Url;
+    audio.load();
+
+    if (wasPlaying) {
+      audio.play().catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChunkIndex, chunks, useFallback]);
+
+  // Advance to next chunk on end
+  const handleEnded = useCallback(() => {
+    if (useFallback) {
+      setIsPlaying(false);
+      return;
+    }
+
+    if (currentChunkIndex < chunks.length - 1) {
+      setCurrentChunkIndex((prev) => prev + 1);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [currentChunkIndex, chunks.length, useFallback]);
+
+  // Track time updates for the global progress
+  const handleTimeUpdate = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (useFallback) {
+      setCurrentTime(audio.currentTime);
+      return;
+    }
+
+    const chunkOffset = cumulativeDurations.current[currentChunkIndex] ?? 0;
+    setCurrentTime(chunkOffset + audio.currentTime);
+  }, [currentChunkIndex, useFallback]);
+
+  // Wire up audio events
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleDurationChange = () => setDuration(audio.duration);
-    const handleEnded = () => setIsPlaying(false);
     const handleLoadStart = () => setIsLoading(true);
     const handleCanPlay = () => setIsLoading(false);
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
-    audio.addEventListener("durationchange", handleDurationChange);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("loadstart", handleLoadStart);
     audio.addEventListener("canplay", handleCanPlay);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
-      audio.removeEventListener("durationchange", handleDurationChange);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("loadstart", handleLoadStart);
       audio.removeEventListener("canplay", handleCanPlay);
     };
-  }, []);
+  }, [handleTimeUpdate, handleEnded]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -47,25 +163,67 @@ export function AudioPlayer({ documentId, title }: AudioPlayerProps) {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play();
+      audio.play().catch(() => {});
     }
     setIsPlaying(!isPlaying);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const targetTime = parseFloat(e.target.value);
 
-    const time = parseFloat(e.target.value);
-    audio.currentTime = time;
-    setCurrentTime(time);
+    if (useFallback) {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = targetTime;
+        setCurrentTime(targetTime);
+      }
+      return;
+    }
+
+    // Find which chunk the target time falls into
+    const cumDurations = cumulativeDurations.current;
+    let targetChunk = 0;
+    for (let i = 0; i < chunks.length; i++) {
+      if (targetTime >= cumDurations[i] && targetTime < cumDurations[i + 1]) {
+        targetChunk = i;
+        break;
+      }
+      // If past all chunks, seek to last chunk
+      if (i === chunks.length - 1) {
+        targetChunk = i;
+      }
+    }
+
+    const offsetWithinChunk = targetTime - cumDurations[targetChunk];
+
+    if (targetChunk !== currentChunkIndex) {
+      setCurrentChunkIndex(targetChunk);
+      // Wait for audio to load then seek
+      const audio = audioRef.current;
+      if (audio) {
+        const seekOnLoad = () => {
+          audio.currentTime = offsetWithinChunk;
+          audio.removeEventListener("canplay", seekOnLoad);
+        };
+        audio.addEventListener("canplay", seekOnLoad);
+      }
+    } else {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = offsetWithinChunk;
+      }
+    }
+
+    setCurrentTime(targetTime);
   };
 
   const skip = (seconds: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const newTime = Math.max(0, Math.min(computedTotalDuration, currentTime + seconds));
 
-    audio.currentTime = Math.max(0, Math.min(duration, currentTime + seconds));
+    // Simulate a seek event
+    handleSeek({
+      target: { value: String(newTime) },
+    } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const formatTime = (time: number) => {
@@ -75,14 +233,19 @@ export function AudioPlayer({ documentId, title }: AudioPlayerProps) {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const progress = duration ? (currentTime / duration) * 100 : 0;
+  const progress = computedTotalDuration ? (currentTime / computedTotalDuration) * 100 : 0;
+
+  // Fallback: use old streaming endpoint
+  const audioSrc = useFallback
+    ? `/api/stream?documentId=${documentId}&mode=FULL_TEXT`
+    : undefined; // src is set programmatically for chunk mode
 
   return (
     <div className="space-y-8">
       {/* Audio Element */}
       <audio
         ref={audioRef}
-        src={`/api/stream?documentId=${documentId}&mode=FULL_TEXT`}
+        src={audioSrc}
         preload="metadata"
       />
 
@@ -107,7 +270,7 @@ export function AudioPlayer({ documentId, title }: AudioPlayerProps) {
         <input
           type="range"
           min="0"
-          max={duration}
+          max={computedTotalDuration}
           value={currentTime}
           onChange={handleSeek}
           className="w-full h-1 bg-surface-container-highest rounded-full appearance-none cursor-pointer
@@ -125,7 +288,7 @@ export function AudioPlayer({ documentId, title }: AudioPlayerProps) {
         />
         <div className="flex justify-between text-sm text-on-surface-variant">
           <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+          <span>{formatTime(computedTotalDuration)}</span>
         </div>
       </div>
 
