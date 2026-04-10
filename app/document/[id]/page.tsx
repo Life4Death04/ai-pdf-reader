@@ -12,6 +12,7 @@ interface Document {
   fileName: string;
   pageCount?: number;
   status: string;
+  audioDuration?: number; // Total audio duration in seconds
 }
 
 export default function DocumentPlayerPage() {
@@ -107,7 +108,11 @@ export default function DocumentPlayerPage() {
 
           {/* Audio Player */}
           <div className="rounded-xl-custom bg-surface-container p-8">
-            <AudioPlayer documentId={documentId} title={document.title} />
+            <AudioPlayer 
+              documentId={documentId} 
+              title={document.title}
+              totalDuration={document.audioDuration}
+            />
           </div>
 
           {/* Mode Tabs */}
