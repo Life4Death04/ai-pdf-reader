@@ -1,4 +1,4 @@
-import type { Document, TextChunk, PlaybackProgress } from "../generated/prisma";
+import type { Document, TextChunk, PlaybackProgress, AudioChunk } from "../generated/prisma";
 
 // ─────────────────────────────────────────────
 // Re-export Prisma enums for use across the app
@@ -15,6 +15,11 @@ export type DocumentWithChunks = Document & {
 export type DocumentWithProgress = Document & {
   playbackProgress: PlaybackProgress[];
 };
+
+// ─────────────────────────────────────────────
+// Re-export AudioChunk for convenience
+// ─────────────────────────────────────────────
+export type { AudioChunk };
 
 // ─────────────────────────────────────────────
 // API response shapes
@@ -50,6 +55,20 @@ export interface TTSResponse {
   audioBuffer: Buffer;
   duration?: number; // seconds
   cached: boolean;
+}
+
+// ─────────────────────────────────────────────
+// Audio chunk API response
+// ─────────────────────────────────────────────
+export interface AudioChunksResponse {
+  documentId: string;
+  totalChunks: number;
+  chunks: Array<{
+    id: string;
+    chunkIndex: number;
+    s3Url: string;
+    duration: number | null;
+  }>;
 }
 
 // ─────────────────────────────────────────────
