@@ -63,6 +63,7 @@ export async function getDocumentById(
       fileSize: true,
       pageCount: true,
       status: true,
+      audioDuration: true,
       createdAt: true,
       errorMessage: true,
       errorCode: true,
@@ -194,6 +195,20 @@ export async function deleteDocumentWithCleanup(
     `[documentService] Cleared ${deletedAudioFiles} audio cache files for document ${documentId}`
   );
 
+  // Delete audio from S3
+  try {
+    const { deleteDocumentAudio } = await import("./audioService");
+    const s3Deleted = await deleteDocumentAudio(documentId);
+    console.log(
+      `[documentService] Deleted ${s3Deleted} S3 audio files for document ${documentId}`
+    );
+  } catch (s3Error) {
+    console.error(
+      `[documentService] S3 cleanup failed (non-critical):`,
+      s3Error
+    );
+  }
+
   // Delete PDF file from disk
   await deleteFileFromDisk(document.fileUrl);
   console.log(`[documentService] Deleted PDF file: ${document.fileUrl}`);
@@ -211,5 +226,67 @@ export async function deleteDocumentWithCleanup(
     audioFilesDeleted: deletedAudioFiles,
     pdfPath: document.fileUrl,
   };
+}
+
+/**
+ * Calculate and update the total audio duration for a document.
+ * Uses chunk audio durations if available, otherwise estimates from text length.
+ * 
+ * @param documentId - Document ID to calculate duration for
+ * @param mode - Processing mode (FULL_TEXT, SUMMARY, PODCAST)
+ * @param prisma - Prisma client instance
+ * @returns Calculated duration in seconds or null if document not found
+ */
+export async function calculateDocumentDuration(
+  documentId: string,
+  mode: string,
+  prisma: PrismaClient
+): Promise<number | null> {
+  const { estimateAudioDuration } = await import("../tts/wav-utils");
+  
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: {
+      chunks: {
+        where: { mode: mode as any },
+        orderBy: { index: "asc" },
+      },
+    },
+  });
+
+  if (!document) {
+    return null;
+  }
+
+  // Try to calculate from actual chunk durations first
+  const hasAllDurations = document.chunks.every(chunk => chunk.audioDuration != null);
+  
+  let totalDuration: number;
+  
+  if (hasAllDurations && document.chunks.length > 0) {
+    // Sum up actual chunk durations
+    totalDuration = document.chunks.reduce(
+      (sum, chunk) => sum + (chunk.audioDuration || 0),
+      0
+    );
+  } else if (document.extractedText) {
+    // Estimate from text length
+    totalDuration = estimateAudioDuration(document.extractedText.length);
+  } else {
+    // Fallback: estimate from all chunk texts
+    const totalTextLength = document.chunks.reduce(
+      (sum, chunk) => sum + chunk.text.length,
+      0
+    );
+    totalDuration = estimateAudioDuration(totalTextLength);
+  }
+
+  // Update document with calculated duration
+  await prisma.document.update({
+    where: { id: documentId },
+    data: { audioDuration: totalDuration },
+  });
+
+  return totalDuration;
 }
 

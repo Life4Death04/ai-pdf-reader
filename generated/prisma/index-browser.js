@@ -138,6 +138,7 @@ exports.Prisma.DocumentScalarFieldEnum = {
   pageCount: 'pageCount',
   extractedText: 'extractedText',
   status: 'status',
+  audioDuration: 'audioDuration',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   errorMessage: 'errorMessage',
@@ -154,8 +155,19 @@ exports.Prisma.TextChunkScalarFieldEnum = {
   mode: 'mode',
   processed: 'processed',
   audioPath: 'audioPath',
+  audioDuration: 'audioDuration',
   createdAt: 'createdAt',
   documentId: 'documentId'
+};
+
+exports.Prisma.AudioChunkScalarFieldEnum = {
+  id: 'id',
+  s3Key: 's3Key',
+  s3Url: 's3Url',
+  duration: 'duration',
+  createdAt: 'createdAt',
+  documentId: 'documentId',
+  chunkIndex: 'chunkIndex'
 };
 
 exports.Prisma.PlaybackProgressScalarFieldEnum = {
@@ -200,6 +212,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   Document: 'Document',
   TextChunk: 'TextChunk',
+  AudioChunk: 'AudioChunk',
   PlaybackProgress: 'PlaybackProgress'
 };
 

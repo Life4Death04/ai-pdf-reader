@@ -49,6 +49,12 @@ export async function runBackgroundProcessing(
     await processDocument(documentId);
     console.log(`[processing] Document ${documentId} is READY`);
 
+    // Phase 1.5: Pre-generate audio and upload to S3
+    console.log(`[processing] Starting audio generation for ${documentId}`);
+    const { generateAllChunkAudio } = await import("./audioService");
+    await generateAllChunkAudio(documentId);
+    console.log(`[processing] Audio generation completed for ${documentId}`);
+
     // Phase 2: Slow path - optionally rewrite chunks
     if (config.enableAiRewrite) {
       console.log(

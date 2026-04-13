@@ -105,6 +105,19 @@ export function calculateAudioSize(durationSeconds: number): number {
   return bytesPerSecond * durationSeconds;
 }
 
+/**
+ * Parses the actual audio duration from a WAV buffer's header.
+ * Reads the data sub-chunk size and computes duration from sample rate.
+ *
+ * @param wavBuffer - Complete WAV file buffer (must include 44-byte header)
+ * @returns Duration in seconds
+ */
+export function parseWavDuration(wavBuffer: Buffer): number {
+  const dataSize = wavBuffer.readUInt32LE(40);
+  const bytesPerSecond = SAMPLE_RATE * NUM_CHANNELS * (BITS_PER_SAMPLE / 8);
+  return dataSize / bytesPerSecond;
+}
+
 // ─────────────────────────────────────────────
 // Future: MP3 Conversion Support
 // ─────────────────────────────────────────────
