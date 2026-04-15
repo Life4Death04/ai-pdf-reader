@@ -10,6 +10,7 @@
 
 import type { PrismaClient } from "../../generated/prisma";
 import type { Document } from "../../generated/prisma";
+import { DocumentStatus } from "../../generated/prisma";
 import { clearDocumentAudioCache } from "../tts/piper";
 import { deleteFileFromDisk } from "./uploadService";
 
@@ -34,6 +35,8 @@ export async function getUserDocuments(
       fileSize: true,
       pageCount: true,
       status: true,
+      totalChunks: true,
+      processedChunks: true,
       createdAt: true,
       errorMessage: true,
       errorCode: true,
@@ -64,6 +67,8 @@ export async function getDocumentById(
       pageCount: true,
       status: true,
       audioDuration: true,
+      totalChunks: true,
+      processedChunks: true,
       createdAt: true,
       errorMessage: true,
       errorCode: true,
@@ -229,64 +234,40 @@ export async function deleteDocumentWithCleanup(
 }
 
 /**
- * Calculate and update the total audio duration for a document.
- * Uses chunk audio durations if available, otherwise estimates from text length.
- * 
- * @param documentId - Document ID to calculate duration for
- * @param mode - Processing mode (FULL_TEXT, SUMMARY, PODCAST)
- * @param prisma - Prisma client instance
- * @returns Calculated duration in seconds or null if document not found
+ * Recalculate and persist document progress based on FULL_TEXT TextChunk states.
+ *
+ * Status transitions (audio-pipeline only; REWRITING is owned by process.ts):
+ *   errored === total && total > 0      → ERROR
+ *   done === total && total > 0         → READY
+ *   done > 0                            → PARTIALLY_READY (playable, still generating)
+ *   done === 0                          → GENERATING (TTS running, nothing playable yet)
+ *
+ * Called by audioService after each chunk finishes generating.
  */
-export async function calculateDocumentDuration(
+export async function updateDocumentProgress(
   documentId: string,
-  mode: string,
   prisma: PrismaClient
-): Promise<number | null> {
-  const { estimateAudioDuration } = await import("../tts/wav-utils");
-  
-  const document = await prisma.document.findUnique({
-    where: { id: documentId },
-    include: {
-      chunks: {
-        where: { mode: mode as any },
-        orderBy: { index: "asc" },
-      },
-    },
-  });
+): Promise<void> {
+  const [total, done, errored] = await Promise.all([
+    prisma.textChunk.count({ where: { documentId, mode: "FULL_TEXT" } }),
+    prisma.textChunk.count({ where: { documentId, mode: "FULL_TEXT", status: "DONE" } }),
+    prisma.textChunk.count({ where: { documentId, mode: "FULL_TEXT", status: "ERROR" } }),
+  ]);
 
-  if (!document) {
-    return null;
-  }
-
-  // Try to calculate from actual chunk durations first
-  const hasAllDurations = document.chunks.every(chunk => chunk.audioDuration != null);
-  
-  let totalDuration: number;
-  
-  if (hasAllDurations && document.chunks.length > 0) {
-    // Sum up actual chunk durations
-    totalDuration = document.chunks.reduce(
-      (sum, chunk) => sum + (chunk.audioDuration || 0),
-      0
-    );
-  } else if (document.extractedText) {
-    // Estimate from text length
-    totalDuration = estimateAudioDuration(document.extractedText.length);
+  let status: DocumentStatus;
+  if (total > 0 && errored > 0) {
+    status = DocumentStatus.ERROR;
+  } else if (total > 0 && done === total) {
+    status = DocumentStatus.READY;
+  } else if (done > 0) {
+    status = DocumentStatus.PARTIALLY_READY;
   } else {
-    // Fallback: estimate from all chunk texts
-    const totalTextLength = document.chunks.reduce(
-      (sum, chunk) => sum + chunk.text.length,
-      0
-    );
-    totalDuration = estimateAudioDuration(totalTextLength);
+    status = DocumentStatus.GENERATING;
   }
 
-  // Update document with calculated duration
   await prisma.document.update({
     where: { id: documentId },
-    data: { audioDuration: totalDuration },
+    data: { processedChunks: done, status },
   });
-
-  return totalDuration;
 }
 
