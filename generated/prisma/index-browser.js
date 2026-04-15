@@ -139,6 +139,8 @@ exports.Prisma.DocumentScalarFieldEnum = {
   extractedText: 'extractedText',
   status: 'status',
   audioDuration: 'audioDuration',
+  totalChunks: 'totalChunks',
+  processedChunks: 'processedChunks',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   errorMessage: 'errorMessage',
@@ -156,6 +158,7 @@ exports.Prisma.TextChunkScalarFieldEnum = {
   processed: 'processed',
   audioPath: 'audioPath',
   audioDuration: 'audioDuration',
+  status: 'status',
   createdAt: 'createdAt',
   documentId: 'documentId'
 };
@@ -198,6 +201,9 @@ exports.DocumentStatus = exports.$Enums.DocumentStatus = {
   UPLOADED: 'UPLOADED',
   EXTRACTING: 'EXTRACTING',
   CHUNKING: 'CHUNKING',
+  REWRITING: 'REWRITING',
+  GENERATING: 'GENERATING',
+  PARTIALLY_READY: 'PARTIALLY_READY',
   READY: 'READY',
   ERROR: 'ERROR'
 };
@@ -206,6 +212,13 @@ exports.ProcessingMode = exports.$Enums.ProcessingMode = {
   FULL_TEXT: 'FULL_TEXT',
   SUMMARY: 'SUMMARY',
   PODCAST: 'PODCAST'
+};
+
+exports.ChunkStatus = exports.$Enums.ChunkStatus = {
+  PENDING: 'PENDING',
+  GENERATING_AUDIO: 'GENERATING_AUDIO',
+  DONE: 'DONE',
+  ERROR: 'ERROR'
 };
 
 exports.Prisma.ModelName = {

@@ -56,11 +56,24 @@ export const DocumentStatus: {
   UPLOADED: 'UPLOADED',
   EXTRACTING: 'EXTRACTING',
   CHUNKING: 'CHUNKING',
+  REWRITING: 'REWRITING',
+  GENERATING: 'GENERATING',
+  PARTIALLY_READY: 'PARTIALLY_READY',
   READY: 'READY',
   ERROR: 'ERROR'
 };
 
 export type DocumentStatus = (typeof DocumentStatus)[keyof typeof DocumentStatus]
+
+
+export const ChunkStatus: {
+  PENDING: 'PENDING',
+  GENERATING_AUDIO: 'GENERATING_AUDIO',
+  DONE: 'DONE',
+  ERROR: 'ERROR'
+};
+
+export type ChunkStatus = (typeof ChunkStatus)[keyof typeof ChunkStatus]
 
 }
 
@@ -71,6 +84,10 @@ export const ProcessingMode: typeof $Enums.ProcessingMode
 export type DocumentStatus = $Enums.DocumentStatus
 
 export const DocumentStatus: typeof $Enums.DocumentStatus
+
+export type ChunkStatus = $Enums.ChunkStatus
+
+export const ChunkStatus: typeof $Enums.ChunkStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -2483,12 +2500,16 @@ export namespace Prisma {
     fileSize: number | null
     pageCount: number | null
     audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
   }
 
   export type DocumentSumAggregateOutputType = {
     fileSize: number | null
     pageCount: number | null
     audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
   }
 
   export type DocumentMinAggregateOutputType = {
@@ -2501,6 +2522,8 @@ export namespace Prisma {
     extractedText: string | null
     status: $Enums.DocumentStatus | null
     audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
     createdAt: Date | null
     updatedAt: Date | null
     errorMessage: string | null
@@ -2519,6 +2542,8 @@ export namespace Prisma {
     extractedText: string | null
     status: $Enums.DocumentStatus | null
     audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
     createdAt: Date | null
     updatedAt: Date | null
     errorMessage: string | null
@@ -2537,6 +2562,8 @@ export namespace Prisma {
     extractedText: number
     status: number
     audioDuration: number
+    totalChunks: number
+    processedChunks: number
     createdAt: number
     updatedAt: number
     errorMessage: number
@@ -2551,12 +2578,16 @@ export namespace Prisma {
     fileSize?: true
     pageCount?: true
     audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
   }
 
   export type DocumentSumAggregateInputType = {
     fileSize?: true
     pageCount?: true
     audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
   }
 
   export type DocumentMinAggregateInputType = {
@@ -2569,6 +2600,8 @@ export namespace Prisma {
     extractedText?: true
     status?: true
     audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
     createdAt?: true
     updatedAt?: true
     errorMessage?: true
@@ -2587,6 +2620,8 @@ export namespace Prisma {
     extractedText?: true
     status?: true
     audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
     createdAt?: true
     updatedAt?: true
     errorMessage?: true
@@ -2605,6 +2640,8 @@ export namespace Prisma {
     extractedText?: true
     status?: true
     audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
     createdAt?: true
     updatedAt?: true
     errorMessage?: true
@@ -2710,6 +2747,8 @@ export namespace Prisma {
     extractedText: string | null
     status: $Enums.DocumentStatus
     audioDuration: number | null
+    totalChunks: number
+    processedChunks: number
     createdAt: Date
     updatedAt: Date
     errorMessage: string | null
@@ -2747,6 +2786,8 @@ export namespace Prisma {
     extractedText?: boolean
     status?: boolean
     audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2770,6 +2811,8 @@ export namespace Prisma {
     extractedText?: boolean
     status?: boolean
     audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2789,6 +2832,8 @@ export namespace Prisma {
     extractedText?: boolean
     status?: boolean
     audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2808,6 +2853,8 @@ export namespace Prisma {
     extractedText?: boolean
     status?: boolean
     audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2816,7 +2863,7 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "audioDuration" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
+  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "audioDuration" | "totalChunks" | "processedChunks" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
   export type DocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     chunks?: boolean | Document$chunksArgs<ExtArgs>
@@ -2849,6 +2896,8 @@ export namespace Prisma {
       extractedText: string | null
       status: $Enums.DocumentStatus
       audioDuration: number | null
+      totalChunks: number
+      processedChunks: number
       createdAt: Date
       updatedAt: Date
       errorMessage: string | null
@@ -3291,6 +3340,8 @@ export namespace Prisma {
     readonly extractedText: FieldRef<"Document", 'String'>
     readonly status: FieldRef<"Document", 'DocumentStatus'>
     readonly audioDuration: FieldRef<"Document", 'Float'>
+    readonly totalChunks: FieldRef<"Document", 'Int'>
+    readonly processedChunks: FieldRef<"Document", 'Int'>
     readonly createdAt: FieldRef<"Document", 'DateTime'>
     readonly updatedAt: FieldRef<"Document", 'DateTime'>
     readonly errorMessage: FieldRef<"Document", 'String'>
@@ -3821,6 +3872,7 @@ export namespace Prisma {
     processed: string | null
     audioPath: string | null
     audioDuration: number | null
+    status: $Enums.ChunkStatus | null
     createdAt: Date | null
     documentId: string | null
   }
@@ -3834,6 +3886,7 @@ export namespace Prisma {
     processed: string | null
     audioPath: string | null
     audioDuration: number | null
+    status: $Enums.ChunkStatus | null
     createdAt: Date | null
     documentId: string | null
   }
@@ -3847,6 +3900,7 @@ export namespace Prisma {
     processed: number
     audioPath: number
     audioDuration: number
+    status: number
     createdAt: number
     documentId: number
     _all: number
@@ -3874,6 +3928,7 @@ export namespace Prisma {
     processed?: true
     audioPath?: true
     audioDuration?: true
+    status?: true
     createdAt?: true
     documentId?: true
   }
@@ -3887,6 +3942,7 @@ export namespace Prisma {
     processed?: true
     audioPath?: true
     audioDuration?: true
+    status?: true
     createdAt?: true
     documentId?: true
   }
@@ -3900,6 +3956,7 @@ export namespace Prisma {
     processed?: true
     audioPath?: true
     audioDuration?: true
+    status?: true
     createdAt?: true
     documentId?: true
     _all?: true
@@ -4000,6 +4057,7 @@ export namespace Prisma {
     processed: string | null
     audioPath: string | null
     audioDuration: number | null
+    status: $Enums.ChunkStatus
     createdAt: Date
     documentId: string
     _count: TextChunkCountAggregateOutputType | null
@@ -4032,6 +4090,7 @@ export namespace Prisma {
     processed?: boolean
     audioPath?: boolean
     audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
     document?: boolean | DocumentDefaultArgs<ExtArgs>
@@ -4046,6 +4105,7 @@ export namespace Prisma {
     processed?: boolean
     audioPath?: boolean
     audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
     document?: boolean | DocumentDefaultArgs<ExtArgs>
@@ -4060,6 +4120,7 @@ export namespace Prisma {
     processed?: boolean
     audioPath?: boolean
     audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
     document?: boolean | DocumentDefaultArgs<ExtArgs>
@@ -4074,11 +4135,12 @@ export namespace Prisma {
     processed?: boolean
     audioPath?: boolean
     audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
   }
 
-  export type TextChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "index" | "text" | "tokenCount" | "mode" | "processed" | "audioPath" | "audioDuration" | "createdAt" | "documentId", ExtArgs["result"]["textChunk"]>
+  export type TextChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "index" | "text" | "tokenCount" | "mode" | "processed" | "audioPath" | "audioDuration" | "status" | "createdAt" | "documentId", ExtArgs["result"]["textChunk"]>
   export type TextChunkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     document?: boolean | DocumentDefaultArgs<ExtArgs>
   }
@@ -4103,6 +4165,7 @@ export namespace Prisma {
       processed: string | null
       audioPath: string | null
       audioDuration: number | null
+      status: $Enums.ChunkStatus
       createdAt: Date
       documentId: string
     }, ExtArgs["result"]["textChunk"]>
@@ -4537,6 +4600,7 @@ export namespace Prisma {
     readonly processed: FieldRef<"TextChunk", 'String'>
     readonly audioPath: FieldRef<"TextChunk", 'String'>
     readonly audioDuration: FieldRef<"TextChunk", 'Float'>
+    readonly status: FieldRef<"TextChunk", 'ChunkStatus'>
     readonly createdAt: FieldRef<"TextChunk", 'DateTime'>
     readonly documentId: FieldRef<"TextChunk", 'String'>
   }
@@ -7256,6 +7320,8 @@ export namespace Prisma {
     extractedText: 'extractedText',
     status: 'status',
     audioDuration: 'audioDuration',
+    totalChunks: 'totalChunks',
+    processedChunks: 'processedChunks',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     errorMessage: 'errorMessage',
@@ -7276,6 +7342,7 @@ export namespace Prisma {
     processed: 'processed',
     audioPath: 'audioPath',
     audioDuration: 'audioDuration',
+    status: 'status',
     createdAt: 'createdAt',
     documentId: 'documentId'
   };
@@ -7427,6 +7494,20 @@ export namespace Prisma {
    */
   export type ListEnumProcessingModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProcessingMode[]'>
     
+
+
+  /**
+   * Reference to a field of type 'ChunkStatus'
+   */
+  export type EnumChunkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ChunkStatus[]'
+   */
+  export type ListEnumChunkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkStatus[]'>
+    
   /**
    * Deep Input Types
    */
@@ -7508,6 +7589,8 @@ export namespace Prisma {
     extractedText?: StringNullableFilter<"Document"> | string | null
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableFilter<"Document"> | number | null
+    totalChunks?: IntFilter<"Document"> | number
+    processedChunks?: IntFilter<"Document"> | number
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
     errorMessage?: StringNullableFilter<"Document"> | string | null
@@ -7530,6 +7613,8 @@ export namespace Prisma {
     extractedText?: SortOrderInput | SortOrder
     status?: SortOrder
     audioDuration?: SortOrderInput | SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrderInput | SortOrder
@@ -7555,6 +7640,8 @@ export namespace Prisma {
     extractedText?: StringNullableFilter<"Document"> | string | null
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableFilter<"Document"> | number | null
+    totalChunks?: IntFilter<"Document"> | number
+    processedChunks?: IntFilter<"Document"> | number
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
     errorMessage?: StringNullableFilter<"Document"> | string | null
@@ -7577,6 +7664,8 @@ export namespace Prisma {
     extractedText?: SortOrderInput | SortOrder
     status?: SortOrder
     audioDuration?: SortOrderInput | SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrderInput | SortOrder
@@ -7603,6 +7692,8 @@ export namespace Prisma {
     extractedText?: StringNullableWithAggregatesFilter<"Document"> | string | null
     status?: EnumDocumentStatusWithAggregatesFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableWithAggregatesFilter<"Document"> | number | null
+    totalChunks?: IntWithAggregatesFilter<"Document"> | number
+    processedChunks?: IntWithAggregatesFilter<"Document"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Document"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Document"> | Date | string
     errorMessage?: StringNullableWithAggregatesFilter<"Document"> | string | null
@@ -7623,6 +7714,7 @@ export namespace Prisma {
     processed?: StringNullableFilter<"TextChunk"> | string | null
     audioPath?: StringNullableFilter<"TextChunk"> | string | null
     audioDuration?: FloatNullableFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeFilter<"TextChunk"> | Date | string
     documentId?: StringFilter<"TextChunk"> | string
     document?: XOR<DocumentScalarRelationFilter, DocumentWhereInput>
@@ -7637,6 +7729,7 @@ export namespace Prisma {
     processed?: SortOrderInput | SortOrder
     audioPath?: SortOrderInput | SortOrder
     audioDuration?: SortOrderInput | SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     document?: DocumentOrderByWithRelationInput
@@ -7655,6 +7748,7 @@ export namespace Prisma {
     processed?: StringNullableFilter<"TextChunk"> | string | null
     audioPath?: StringNullableFilter<"TextChunk"> | string | null
     audioDuration?: FloatNullableFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeFilter<"TextChunk"> | Date | string
     documentId?: StringFilter<"TextChunk"> | string
     document?: XOR<DocumentScalarRelationFilter, DocumentWhereInput>
@@ -7669,6 +7763,7 @@ export namespace Prisma {
     processed?: SortOrderInput | SortOrder
     audioPath?: SortOrderInput | SortOrder
     audioDuration?: SortOrderInput | SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     _count?: TextChunkCountOrderByAggregateInput
@@ -7690,6 +7785,7 @@ export namespace Prisma {
     processed?: StringNullableWithAggregatesFilter<"TextChunk"> | string | null
     audioPath?: StringNullableWithAggregatesFilter<"TextChunk"> | string | null
     audioDuration?: FloatNullableWithAggregatesFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusWithAggregatesFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeWithAggregatesFilter<"TextChunk"> | Date | string
     documentId?: StringWithAggregatesFilter<"TextChunk"> | string
   }
@@ -7914,6 +8010,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -7935,6 +8033,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -7956,6 +8056,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7977,6 +8079,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7998,6 +8102,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -8016,6 +8122,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -8033,6 +8141,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -8050,6 +8160,7 @@ export namespace Prisma {
     processed?: string | null
     audioPath?: string | null
     audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
     document: DocumentCreateNestedOneWithoutChunksInput
   }
@@ -8063,6 +8174,7 @@ export namespace Prisma {
     processed?: string | null
     audioPath?: string | null
     audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
     documentId: string
   }
@@ -8076,6 +8188,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     document?: DocumentUpdateOneRequiredWithoutChunksNestedInput
   }
@@ -8089,6 +8202,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     documentId?: StringFieldUpdateOperationsInput | string
   }
@@ -8102,6 +8216,7 @@ export namespace Prisma {
     processed?: string | null
     audioPath?: string | null
     audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
     documentId: string
   }
@@ -8115,6 +8230,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -8127,6 +8243,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     documentId?: StringFieldUpdateOperationsInput | string
   }
@@ -8453,6 +8570,17 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -8499,6 +8627,8 @@ export namespace Prisma {
     extractedText?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrder
@@ -8511,6 +8641,8 @@ export namespace Prisma {
     fileSize?: SortOrder
     pageCount?: SortOrder
     audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
   }
 
   export type DocumentMaxOrderByAggregateInput = {
@@ -8523,6 +8655,8 @@ export namespace Prisma {
     extractedText?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrder
@@ -8541,6 +8675,8 @@ export namespace Prisma {
     extractedText?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrder
@@ -8553,6 +8689,8 @@ export namespace Prisma {
     fileSize?: SortOrder
     pageCount?: SortOrder
     audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
   }
 
   export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -8597,6 +8735,22 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -8611,22 +8765,18 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
-  }
-
   export type EnumProcessingModeFilter<$PrismaModel = never> = {
     equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
     in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
     notIn?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
     not?: NestedEnumProcessingModeFilter<$PrismaModel> | $Enums.ProcessingMode
+  }
+
+  export type EnumChunkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusFilter<$PrismaModel> | $Enums.ChunkStatus
   }
 
   export type DocumentScalarRelationFilter = {
@@ -8649,6 +8799,7 @@ export namespace Prisma {
     processed?: SortOrder
     audioPath?: SortOrder
     audioDuration?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
   }
@@ -8668,6 +8819,7 @@ export namespace Prisma {
     processed?: SortOrder
     audioPath?: SortOrder
     audioDuration?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
   }
@@ -8681,6 +8833,7 @@ export namespace Prisma {
     processed?: SortOrder
     audioPath?: SortOrder
     audioDuration?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
   }
@@ -8691,22 +8844,6 @@ export namespace Prisma {
     audioDuration?: SortOrder
   }
 
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
   export type EnumProcessingModeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
     in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
@@ -8715,6 +8852,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumProcessingModeFilter<$PrismaModel>
     _max?: NestedEnumProcessingModeFilter<$PrismaModel>
+  }
+
+  export type EnumChunkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusWithAggregatesFilter<$PrismaModel> | $Enums.ChunkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChunkStatusFilter<$PrismaModel>
+    _max?: NestedEnumChunkStatusFilter<$PrismaModel>
   }
 
   export type AudioChunkDocumentIdChunkIndexCompoundUniqueInput = {
@@ -9002,6 +9149,14 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
   }
@@ -9104,16 +9259,12 @@ export namespace Prisma {
     connect?: DocumentWhereUniqueInput
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type EnumProcessingModeFieldUpdateOperationsInput = {
     set?: $Enums.ProcessingMode
+  }
+
+  export type EnumChunkStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ChunkStatus
   }
 
   export type DocumentUpdateOneRequiredWithoutChunksNestedInput = {
@@ -9367,27 +9518,6 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedEnumProcessingModeFilter<$PrismaModel = never> = {
-    equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
-    in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
-    not?: NestedEnumProcessingModeFilter<$PrismaModel> | $Enums.ProcessingMode
-  }
-
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -9415,6 +9545,34 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumProcessingModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumProcessingModeFilter<$PrismaModel> | $Enums.ProcessingMode
+  }
+
+  export type NestedEnumChunkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusFilter<$PrismaModel> | $Enums.ChunkStatus
+  }
+
   export type NestedEnumProcessingModeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
     in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
@@ -9423,6 +9581,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumProcessingModeFilter<$PrismaModel>
     _max?: NestedEnumProcessingModeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumChunkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusWithAggregatesFilter<$PrismaModel> | $Enums.ChunkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChunkStatusFilter<$PrismaModel>
+    _max?: NestedEnumChunkStatusFilter<$PrismaModel>
   }
 
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -9451,6 +9619,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -9471,6 +9641,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -9548,6 +9720,8 @@ export namespace Prisma {
     extractedText?: StringNullableFilter<"Document"> | string | null
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableFilter<"Document"> | number | null
+    totalChunks?: IntFilter<"Document"> | number
+    processedChunks?: IntFilter<"Document"> | number
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
     errorMessage?: StringNullableFilter<"Document"> | string | null
@@ -9619,6 +9793,7 @@ export namespace Prisma {
     processed?: string | null
     audioPath?: string | null
     audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
   }
 
@@ -9631,6 +9806,7 @@ export namespace Prisma {
     processed?: string | null
     audioPath?: string | null
     audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
   }
 
@@ -9759,6 +9935,7 @@ export namespace Prisma {
     processed?: StringNullableFilter<"TextChunk"> | string | null
     audioPath?: StringNullableFilter<"TextChunk"> | string | null
     audioDuration?: FloatNullableFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeFilter<"TextChunk"> | Date | string
     documentId?: StringFilter<"TextChunk"> | string
   }
@@ -9818,6 +9995,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -9838,6 +10017,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -9874,6 +10055,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -9894,6 +10077,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -9914,6 +10099,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -9934,6 +10121,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -9970,6 +10159,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -9990,6 +10181,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10035,6 +10228,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -10055,6 +10250,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -10122,6 +10319,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10142,6 +10341,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10162,6 +10363,8 @@ export namespace Prisma {
     extractedText?: string | null
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -10188,6 +10391,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10208,6 +10413,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10228,6 +10435,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10271,6 +10480,7 @@ export namespace Prisma {
     processed?: string | null
     audioPath?: string | null
     audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
   }
 
@@ -10301,6 +10511,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10313,6 +10524,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10325,6 +10537,7 @@ export namespace Prisma {
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
