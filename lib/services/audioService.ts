@@ -11,9 +11,11 @@
 
 import { prisma } from "../prisma/prisma";
 import type { AudioChunk } from "../../generated/prisma";
+import { ChunkStatus } from "../../generated/prisma";
 import { generateAudio } from "../tts/piper";
 import { parseWavDuration } from "../tts/wav-utils";
 import { uploadAudioToS3, deleteDocumentAudioFromS3 } from "../storage/s3";
+import { updateDocumentProgress } from "./documentService";
 
 // ─────────────────────────────────────────────
 // Public API
@@ -44,8 +46,20 @@ export async function generateAndStoreChunkAudio(params: {
     console.log(
       `[audioService] Chunk ${chunkIndex} of ${documentId} already exists, skipping`
     );
+    // Ensure the TextChunk reflects DONE even on a re-run
+    await prisma.textChunk.updateMany({
+      where: { documentId, index: chunkIndex, mode: "FULL_TEXT" },
+      data: { status: ChunkStatus.DONE },
+    });
+    await updateDocumentProgress(documentId, prisma);
     return existing;
   }
+
+  // Mark chunk as generating so the frontend can show progress
+  await prisma.textChunk.updateMany({
+    where: { documentId, index: chunkIndex, mode: "FULL_TEXT" },
+    data: { status: ChunkStatus.GENERATING_AUDIO },
+  });
 
   // Generate audio via TTS
   const ttsResult = await generateAudio({
@@ -74,6 +88,13 @@ export async function generateAndStoreChunkAudio(params: {
       duration,
     },
   });
+
+  // Mark chunk DONE and update document-level progress/status
+  await prisma.textChunk.updateMany({
+    where: { documentId, index: chunkIndex, mode: "FULL_TEXT" },
+    data: { status: ChunkStatus.DONE },
+  });
+  await updateDocumentProgress(documentId, prisma);
 
   console.log(
     `[audioService] Stored chunk ${chunkIndex} of ${documentId} (${duration.toFixed(1)}s, ${(ttsResult.audioBuffer.length / 1024).toFixed(1)}KB)`
@@ -132,6 +153,12 @@ export async function generateAllChunkAudio(
       console.error(
         `[audioService] Failed to generate audio for chunk ${chunk.index} of ${documentId}: ${message}`
       );
+      // Mark the chunk as ERROR so the frontend can reflect the failure
+      await prisma.textChunk.updateMany({
+        where: { documentId, index: chunk.index, mode: "FULL_TEXT" },
+        data: { status: ChunkStatus.ERROR },
+      }).catch(() => {});
+      await updateDocumentProgress(documentId, prisma);
       // Continue with next chunk — don't abort the batch
     }
   }
@@ -139,6 +166,36 @@ export async function generateAllChunkAudio(
   console.log(
     `[audioService] Completed: ${successCount}/${chunks.length} chunks for document ${documentId}`
   );
+
+  // Update document.audioDuration with the sum of actual chunk durations.
+  // This overwrites the rough text-based estimate written during processDocument(),
+  // which runs before any audio exists and can be 20–30% off.
+  try {
+    const audioChunks = await prisma.audioChunk.findMany({
+      where: { documentId },
+      select: { duration: true },
+    });
+
+    const totalDuration = audioChunks.reduce(
+      (sum, c) => sum + (c.duration ?? 0),
+      0
+    );
+
+    if (totalDuration > 0) {
+      await prisma.document.update({
+        where: { id: documentId },
+        data: { audioDuration: totalDuration },
+      });
+      console.log(
+        `[audioService] Updated document ${documentId} audioDuration: ${totalDuration.toFixed(1)}s (${(totalDuration / 60).toFixed(2)} min)`
+      );
+    }
+  } catch (error) {
+    console.error(
+      `[audioService] Failed to update audioDuration for ${documentId}:`,
+      error
+    );
+  }
 }
 
 /**

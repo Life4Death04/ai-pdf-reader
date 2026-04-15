@@ -107,15 +107,21 @@ export function calculateAudioSize(durationSeconds: number): number {
 
 /**
  * Parses the actual audio duration from a WAV buffer's header.
- * Reads the data sub-chunk size and computes duration from sample rate.
+ * Reads ByteRate and data sub-chunk size directly from the header,
+ * rather than relying on hardcoded constants, so it works correctly
+ * regardless of the voice model's sample rate or channel count.
+ *
+ * WAV header layout (standard PCM):
+ *   Offset 28: ByteRate  = SampleRate × NumChannels × BitsPerSample/8 (uint32 LE)
+ *   Offset 40: DataSize  = number of audio data bytes (uint32 LE)
  *
  * @param wavBuffer - Complete WAV file buffer (must include 44-byte header)
  * @returns Duration in seconds
  */
 export function parseWavDuration(wavBuffer: Buffer): number {
-  const dataSize = wavBuffer.readUInt32LE(40);
-  const bytesPerSecond = SAMPLE_RATE * NUM_CHANNELS * (BITS_PER_SAMPLE / 8);
-  return dataSize / bytesPerSecond;
+  const byteRate = wavBuffer.readUInt32LE(28); // bytes per second
+  const dataSize = wavBuffer.readUInt32LE(40); // total audio data bytes
+  return dataSize / byteRate;
 }
 
 // ─────────────────────────────────────────────

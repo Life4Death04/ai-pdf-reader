@@ -75,30 +75,18 @@ export async function processDocument(documentId: string): Promise<void> {
       skipDuplicates: true,
     });
 
-    // ── Step 5: Mark as READY ──────────────────────────────────────────────
-    // Document is now immediately usable! Users can start listening to original text.
+    // ── Step 5: Record chunk count — status stays CHUNKING until audio exists ─
+    // READY is only set by audioService once all AudioChunks are generated.
+    // totalChunks lets the player know how many chunks to expect.
     await prisma.document.update({
       where: { id: documentId },
-      data: { status: DocumentStatus.READY },
+      data: { totalChunks: chunks.length, processedChunks: 0 },
     });
 
     console.log(
-      `[process] ✅ Document ${documentId} READY — ${chunks.length} chunks, ${pageCount} pages`
+      `[process] ✅ Document ${documentId} chunked — ${chunks.length} chunks, ${pageCount} pages. Audio generation will drive status.`
     );
-    
-    // ── Step 6: Calculate audio duration for FULL_TEXT mode ───────────────
-    // This provides an estimated duration for the audio player
-    try {
-      const { calculateDocumentDuration } = await import("@/lib/services/documentService");
-      const duration = await calculateDocumentDuration(documentId, "FULL_TEXT", prisma);
-      if (duration) {
-        console.log(`[process] 📊 Calculated audio duration: ${duration.toFixed(2)}s (${(duration / 60).toFixed(2)} minutes)`);
-      }
-    } catch (durationError) {
-      console.error(`[process] Failed to calculate duration (non-critical):`, durationError);
-      // Don't fail the whole process if duration calculation fails
-    }
-    
+
     console.log(
       `[process] Processing completed in fast path. AI rewriting can be triggered separately if enabled.`
     );
@@ -188,6 +176,14 @@ export async function rewriteDocumentChunks(
     await warmupModel();
     console.log("[rewrite] ✅ Model warmed up");
 
+    // Mark the document as REWRITING so the UI can show the activity badge.
+    // Audio is already generated at this point, so playability is unaffected
+    // — the DocumentCard derives playability from processedChunks/totalChunks.
+    await prisma.document.update({
+      where: { id: documentId },
+      data: { status: DocumentStatus.REWRITING },
+    });
+
     // ── Step 4: Rewrite chunks in parallel ────────────────────────────────
     console.log(`[rewrite] Starting parallel rewrite (concurrency: ${concurrency})...\n`);
 
@@ -238,6 +234,12 @@ export async function rewriteDocumentChunks(
 
     // ── Step 5: Complete ──────────────────────────────────────────────────
     const duration = ((Date.now() - startTime) / 1000 / 60).toFixed(2);
+
+    // Restore status to READY now that rewriting is done.
+    await prisma.document.update({
+      where: { id: documentId },
+      data: { status: DocumentStatus.READY },
+    });
 
     console.log("\n" + "=".repeat(70));
     console.log(`🎉 REWRITE COMPLETE FOR DOCUMENT ${documentId}`);
