@@ -1,47 +1,29 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Upload as UploadIcon } from "lucide-react";
+import { useState } from "react";
+import { Upload as UploadIcon, FileUp, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface UploadZoneProps {
   onUploadComplete?: (documentId: string) => void;
 }
 
+type UploadState = "idle" | "dragging" | "uploading" | "success";
+
 export function UploadZone({ onUploadComplete }: UploadZoneProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(( e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    const pdfFile = files.find((f) => f.type === "application/pdf");
-
-    if (pdfFile) {
-      await uploadFile(pdfFile);
-    }
-  }, []);
-
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      await uploadFile(file);
-    }
-  }, []);
+  const [state, setState] = useState<UploadState>("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [fileName, setFileName] = useState("");
 
   const uploadFile = async (file: File) => {
-    setIsUploading(true);
+    setState("uploading");
+    setFileName(file.name);
+    setUploadProgress(0);
+
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => Math.min(prev + Math.random() * 15, 85));
+    }, 300);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -52,67 +34,188 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
       });
 
       const result = await response.json();
-      
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       if (response.ok && result.data?.documentId) {
-        onUploadComplete?.(result.data.documentId);
+        setState("success");
+        setTimeout(() => {
+          setState("idle");
+          setUploadProgress(0);
+          setFileName("");
+          onUploadComplete?.(result.data.documentId);
+        }, 1500);
+      } else {
+        setState("idle");
+        setUploadProgress(0);
       }
     } catch (error) {
       console.error("Upload failed:", error);
-    } finally {
-      setIsUploading(false);
+      clearInterval(progressInterval);
+      setState("idle");
+      setUploadProgress(0);
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setState("dragging");
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setState("idle");
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setState("idle");
+    const pdfFile = Array.from(e.dataTransfer.files).find((f) => f.type === "application/pdf");
+    if (pdfFile) await uploadFile(pdfFile);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === "application/pdf") await uploadFile(file);
+  };
+
   return (
-    <div
+    <motion.div
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      animate={{
+        borderColor: state === "dragging" ? "rgba(163, 166, 255, 0.6)" : "rgba(30, 45, 72, 0.5)",
+        scale: state === "dragging" ? 1.01 : 1,
+      }}
+      transition={{ duration: 0.2 }}
       className={`
-        relative rounded-xl-custom overflow-hidden
-        bg-surface-container-low p-12
-        border-2 border-dashed transition-all duration-300
-        ${isDragging
-          ? "border-primary glow-primary bg-surface-container"
-          : "border-outline-variant/20 hover:border-outline-variant/40"
-        }
-        ${isUploading ? "opacity-50 pointer-events-none" : ""}
+        relative overflow-hidden rounded-2xl-custom
+        transition-colors
+        ${state === "uploading" || state === "success" ? "pointer-events-none" : "cursor-pointer"}
       `}
+      style={{
+        background: state === "dragging"
+          ? "linear-gradient(145deg, rgba(163, 166, 255, 0.06) 0%, rgba(105, 246, 184, 0.03) 100%)"
+          : "linear-gradient(145deg, var(--surface-container) 0%, var(--surface-container-low) 100%)",
+      }}
     >
-      <div className="flex flex-col items-center gap-6 text-center">
-        <div
-          className={`
-            rounded-full p-6 transition-all duration-300
-            ${isDragging ? "primary-gradient scale-110" : "bg-surface-container"}
-          `}
+      <label className="block cursor-pointer p-8">
+        <div className="flex flex-col items-center gap-5 text-center">
+          <AnimatePresence mode="wait">
+            {state === "success" ? (
+              <motion.div
+                key="success"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                className="w-16 h-16 rounded-full secondary-gradient flex items-center justify-center glow-secondary"
+              >
+                <Check className="w-8 h-8 text-[#001a10]" />
+              </motion.div>
+            ) : state === "uploading" ? (
+              <motion.div
+                key="uploading"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="relative w-16 h-16"
+              >
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 64 64">
+                  <circle
+                    cx="32" cy="32" r="28"
+                    fill="none"
+                    stroke="var(--surface-variant)"
+                    strokeWidth="3"
+                  />
+                  <motion.circle
+                    cx="32" cy="32" r="28"
+                    fill="none"
+                    stroke="url(#uploadGradient)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 28}
+                    strokeDashoffset={2 * Math.PI * 28 * (1 - uploadProgress / 100)}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  />
+                  <defs>
+                    <linearGradient id="uploadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#a3a6ff" />
+                      <stop offset="100%" stopColor="#69f6b8" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <FileUp className="w-6 h-6 text-primary" />
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="idle"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                whileHover={{ scale: 1.05 }}
+                className={`
+                  w-16 h-16 rounded-2xl flex items-center justify-center transition-colors
+                  ${state === "dragging"
+                    ? "primary-gradient glow-primary"
+                    : "bg-surface-container-highest"
+                  }
+                `}
+              >
+                <UploadIcon className={`w-7 h-7 ${state === "dragging" ? "text-white" : "text-primary"}`} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-1.5">
+            {state === "uploading" ? (
+              <>
+                <p className="text-sm font-semibold text-on-surface">Uploading...</p>
+                <p className="text-xs text-on-surface-variant truncate max-w-[200px]">{fileName}</p>
+              </>
+            ) : state === "success" ? (
+              <>
+                <p className="text-sm font-semibold text-secondary">Upload Complete</p>
+                <p className="text-xs text-on-surface-variant">Processing your document...</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-on-surface">
+                  {state === "dragging" ? "Drop your PDF" : "Add to Library"}
+                </p>
+                <p className="text-xs text-on-surface-variant">
+                  Drop a PDF or click to browse
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <input
+          type="file"
+          accept=".pdf"
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={state !== "idle"}
+        />
+      </label>
+
+      {/* Upload progress bar at bottom */}
+      {state === "uploading" && (
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          className="absolute bottom-0 left-0 right-0 h-0.5 origin-left"
         >
-          <UploadIcon 
-            className={`w-12 h-12 ${ isDragging ? "text-on-primary" : "text-primary"}`}
+          <div
+            className="h-full aurora-gradient transition-all duration-300"
+            style={{ width: `${uploadProgress}%` }}
           />
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-2xl font-semibold text-on-surface">
-            {isUploading ? "Uploading..." : "Upload New PDF"}
-          </h3>
-          <p className="text-on-surface-variant max-w-xs">
-            Transform your static documents into immersive podcasts.
-          </p>
-        </div>
-
-        <label className="cursor-pointer">
-          <span className="inline-block px-8 py-3 rounded-lg-custom primary-gradient text-on-primary font-medium hover:scale-105 transition-transform">
-            {isUploading ? "Processing..." : "Drag and drop or Browse"}
-          </span>
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={handleFileSelect}
-            className="hidden"
-            disabled={isUploading}
-          />
-        </label>
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
