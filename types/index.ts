@@ -17,11 +17,13 @@ export type DocumentWithProgress = Document & {
 };
 
 // ─────────────────────────────────────────────
-// Re-export AudioChunk for convenience
+// Audio chunk metadata used in the frontend (from DB + S3)
 // ─────────────────────────────────────────────
-export type { AudioChunk };
+export interface AudioChunkInfo {
+  s3Url: string;
+  duration?: number;
+}
 
-// ─────────────────────────────────────────────
 // API response shapes
 // ─────────────────────────────────────────────
 export interface ApiResponse<T> {
