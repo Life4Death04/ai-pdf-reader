@@ -20,9 +20,10 @@ interface AudioPlayerProps {
   documentStatus?: string;
   totalChunks?: number;
   onChunkChange?: (chunkIndex: number) => void;
+  onPlayStateChange?: (playing: boolean) => void;
 }
 
-export function AudioPlayer({ documentId, title, totalDuration, documentStatus, totalChunks, onChunkChange }: AudioPlayerProps) {
+export function AudioPlayer({ documentId, title, totalDuration, documentStatus, totalChunks, onChunkChange, onPlayStateChange }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const preloadRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -153,6 +154,7 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
   const handleEnded = useCallback(() => {
     if (useFallback) {
       setIsPlaying(false);
+      onPlayStateChange?.(false);
       return;
     }
 
@@ -160,8 +162,9 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
       setCurrentChunkIndex((prev) => prev + 1);
     } else {
       setIsPlaying(false);
+      onPlayStateChange?.(false);
     }
-  }, [currentChunkIndex, chunks.length, useFallback]);
+  }, [currentChunkIndex, chunks.length, useFallback, onPlayStateChange]);
 
   // Track time updates for the global progress
   const handleTimeUpdate = useCallback(() => {
@@ -232,7 +235,9 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
     } else {
       audio.play().catch(() => {});
     }
-    setIsPlaying(!isPlaying);
+    const next = !isPlaying;
+    setIsPlaying(next);
+    onPlayStateChange?.(next);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
