@@ -29,6 +29,11 @@ export type Document = $Result.DefaultSelection<Prisma.$DocumentPayload>
  */
 export type TextChunk = $Result.DefaultSelection<Prisma.$TextChunkPayload>
 /**
+ * Model AudioChunk
+ * 
+ */
+export type AudioChunk = $Result.DefaultSelection<Prisma.$AudioChunkPayload>
+/**
  * Model PlaybackProgress
  * 
  */
@@ -51,11 +56,24 @@ export const DocumentStatus: {
   UPLOADED: 'UPLOADED',
   EXTRACTING: 'EXTRACTING',
   CHUNKING: 'CHUNKING',
+  REWRITING: 'REWRITING',
+  GENERATING: 'GENERATING',
+  PARTIALLY_READY: 'PARTIALLY_READY',
   READY: 'READY',
   ERROR: 'ERROR'
 };
 
 export type DocumentStatus = (typeof DocumentStatus)[keyof typeof DocumentStatus]
+
+
+export const ChunkStatus: {
+  PENDING: 'PENDING',
+  GENERATING_AUDIO: 'GENERATING_AUDIO',
+  DONE: 'DONE',
+  ERROR: 'ERROR'
+};
+
+export type ChunkStatus = (typeof ChunkStatus)[keyof typeof ChunkStatus]
 
 }
 
@@ -66,6 +84,10 @@ export const ProcessingMode: typeof $Enums.ProcessingMode
 export type DocumentStatus = $Enums.DocumentStatus
 
 export const DocumentStatus: typeof $Enums.DocumentStatus
+
+export type ChunkStatus = $Enums.ChunkStatus
+
+export const ChunkStatus: typeof $Enums.ChunkStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -217,6 +239,16 @@ export class PrismaClient<
     * ```
     */
   get textChunk(): Prisma.TextChunkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.audioChunk`: Exposes CRUD operations for the **AudioChunk** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AudioChunks
+    * const audioChunks = await prisma.audioChunk.findMany()
+    * ```
+    */
+  get audioChunk(): Prisma.AudioChunkDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.playbackProgress`: Exposes CRUD operations for the **PlaybackProgress** model.
@@ -664,6 +696,7 @@ export namespace Prisma {
     User: 'User',
     Document: 'Document',
     TextChunk: 'TextChunk',
+    AudioChunk: 'AudioChunk',
     PlaybackProgress: 'PlaybackProgress'
   };
 
@@ -680,7 +713,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "document" | "textChunk" | "playbackProgress"
+      modelProps: "user" | "document" | "textChunk" | "audioChunk" | "playbackProgress"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -906,6 +939,80 @@ export namespace Prisma {
           }
         }
       }
+      AudioChunk: {
+        payload: Prisma.$AudioChunkPayload<ExtArgs>
+        fields: Prisma.AudioChunkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AudioChunkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AudioChunkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>
+          }
+          findFirst: {
+            args: Prisma.AudioChunkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AudioChunkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>
+          }
+          findMany: {
+            args: Prisma.AudioChunkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>[]
+          }
+          create: {
+            args: Prisma.AudioChunkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>
+          }
+          createMany: {
+            args: Prisma.AudioChunkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AudioChunkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>[]
+          }
+          delete: {
+            args: Prisma.AudioChunkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>
+          }
+          update: {
+            args: Prisma.AudioChunkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>
+          }
+          deleteMany: {
+            args: Prisma.AudioChunkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AudioChunkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AudioChunkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>[]
+          }
+          upsert: {
+            args: Prisma.AudioChunkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AudioChunkPayload>
+          }
+          aggregate: {
+            args: Prisma.AudioChunkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAudioChunk>
+          }
+          groupBy: {
+            args: Prisma.AudioChunkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AudioChunkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AudioChunkCountArgs<ExtArgs>
+            result: $Utils.Optional<AudioChunkCountAggregateOutputType> | number
+          }
+        }
+      }
       PlaybackProgress: {
         payload: Prisma.$PlaybackProgressPayload<ExtArgs>
         fields: Prisma.PlaybackProgressFieldRefs
@@ -1091,6 +1198,7 @@ export namespace Prisma {
     user?: UserOmit
     document?: DocumentOmit
     textChunk?: TextChunkOmit
+    audioChunk?: AudioChunkOmit
     playbackProgress?: PlaybackProgressOmit
   }
 
@@ -1213,11 +1321,13 @@ export namespace Prisma {
 
   export type DocumentCountOutputType = {
     chunks: number
+    audioChunks: number
     playbackProgress: number
   }
 
   export type DocumentCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     chunks?: boolean | DocumentCountOutputTypeCountChunksArgs
+    audioChunks?: boolean | DocumentCountOutputTypeCountAudioChunksArgs
     playbackProgress?: boolean | DocumentCountOutputTypeCountPlaybackProgressArgs
   }
 
@@ -1237,6 +1347,13 @@ export namespace Prisma {
    */
   export type DocumentCountOutputTypeCountChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TextChunkWhereInput
+  }
+
+  /**
+   * DocumentCountOutputType without action
+   */
+  export type DocumentCountOutputTypeCountAudioChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AudioChunkWhereInput
   }
 
   /**
@@ -2382,11 +2499,17 @@ export namespace Prisma {
   export type DocumentAvgAggregateOutputType = {
     fileSize: number | null
     pageCount: number | null
+    audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
   }
 
   export type DocumentSumAggregateOutputType = {
     fileSize: number | null
     pageCount: number | null
+    audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
   }
 
   export type DocumentMinAggregateOutputType = {
@@ -2398,6 +2521,9 @@ export namespace Prisma {
     pageCount: number | null
     extractedText: string | null
     status: $Enums.DocumentStatus | null
+    audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
     createdAt: Date | null
     updatedAt: Date | null
     errorMessage: string | null
@@ -2415,6 +2541,9 @@ export namespace Prisma {
     pageCount: number | null
     extractedText: string | null
     status: $Enums.DocumentStatus | null
+    audioDuration: number | null
+    totalChunks: number | null
+    processedChunks: number | null
     createdAt: Date | null
     updatedAt: Date | null
     errorMessage: string | null
@@ -2432,6 +2561,9 @@ export namespace Prisma {
     pageCount: number
     extractedText: number
     status: number
+    audioDuration: number
+    totalChunks: number
+    processedChunks: number
     createdAt: number
     updatedAt: number
     errorMessage: number
@@ -2445,11 +2577,17 @@ export namespace Prisma {
   export type DocumentAvgAggregateInputType = {
     fileSize?: true
     pageCount?: true
+    audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
   }
 
   export type DocumentSumAggregateInputType = {
     fileSize?: true
     pageCount?: true
+    audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
   }
 
   export type DocumentMinAggregateInputType = {
@@ -2461,6 +2599,9 @@ export namespace Prisma {
     pageCount?: true
     extractedText?: true
     status?: true
+    audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
     createdAt?: true
     updatedAt?: true
     errorMessage?: true
@@ -2478,6 +2619,9 @@ export namespace Prisma {
     pageCount?: true
     extractedText?: true
     status?: true
+    audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
     createdAt?: true
     updatedAt?: true
     errorMessage?: true
@@ -2495,6 +2639,9 @@ export namespace Prisma {
     pageCount?: true
     extractedText?: true
     status?: true
+    audioDuration?: true
+    totalChunks?: true
+    processedChunks?: true
     createdAt?: true
     updatedAt?: true
     errorMessage?: true
@@ -2599,6 +2746,9 @@ export namespace Prisma {
     pageCount: number | null
     extractedText: string | null
     status: $Enums.DocumentStatus
+    audioDuration: number | null
+    totalChunks: number
+    processedChunks: number
     createdAt: Date
     updatedAt: Date
     errorMessage: string | null
@@ -2635,6 +2785,9 @@ export namespace Prisma {
     pageCount?: boolean
     extractedText?: boolean
     status?: boolean
+    audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2643,6 +2796,7 @@ export namespace Prisma {
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     chunks?: boolean | Document$chunksArgs<ExtArgs>
+    audioChunks?: boolean | Document$audioChunksArgs<ExtArgs>
     playbackProgress?: boolean | Document$playbackProgressArgs<ExtArgs>
     _count?: boolean | DocumentCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["document"]>
@@ -2656,6 +2810,9 @@ export namespace Prisma {
     pageCount?: boolean
     extractedText?: boolean
     status?: boolean
+    audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2674,6 +2831,9 @@ export namespace Prisma {
     pageCount?: boolean
     extractedText?: boolean
     status?: boolean
+    audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2692,6 +2852,9 @@ export namespace Prisma {
     pageCount?: boolean
     extractedText?: boolean
     status?: boolean
+    audioDuration?: boolean
+    totalChunks?: boolean
+    processedChunks?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     errorMessage?: boolean
@@ -2700,10 +2863,11 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
+  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "audioDuration" | "totalChunks" | "processedChunks" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
   export type DocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     chunks?: boolean | Document$chunksArgs<ExtArgs>
+    audioChunks?: boolean | Document$audioChunksArgs<ExtArgs>
     playbackProgress?: boolean | Document$playbackProgressArgs<ExtArgs>
     _count?: boolean | DocumentCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -2719,6 +2883,7 @@ export namespace Prisma {
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
       chunks: Prisma.$TextChunkPayload<ExtArgs>[]
+      audioChunks: Prisma.$AudioChunkPayload<ExtArgs>[]
       playbackProgress: Prisma.$PlaybackProgressPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -2730,6 +2895,9 @@ export namespace Prisma {
       pageCount: number | null
       extractedText: string | null
       status: $Enums.DocumentStatus
+      audioDuration: number | null
+      totalChunks: number
+      processedChunks: number
       createdAt: Date
       updatedAt: Date
       errorMessage: string | null
@@ -3132,6 +3300,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     chunks<T extends Document$chunksArgs<ExtArgs> = {}>(args?: Subset<T, Document$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TextChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    audioChunks<T extends Document$audioChunksArgs<ExtArgs> = {}>(args?: Subset<T, Document$audioChunksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     playbackProgress<T extends Document$playbackProgressArgs<ExtArgs> = {}>(args?: Subset<T, Document$playbackProgressArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlaybackProgressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -3170,6 +3339,9 @@ export namespace Prisma {
     readonly pageCount: FieldRef<"Document", 'Int'>
     readonly extractedText: FieldRef<"Document", 'String'>
     readonly status: FieldRef<"Document", 'DocumentStatus'>
+    readonly audioDuration: FieldRef<"Document", 'Float'>
+    readonly totalChunks: FieldRef<"Document", 'Int'>
+    readonly processedChunks: FieldRef<"Document", 'Int'>
     readonly createdAt: FieldRef<"Document", 'DateTime'>
     readonly updatedAt: FieldRef<"Document", 'DateTime'>
     readonly errorMessage: FieldRef<"Document", 'String'>
@@ -3601,6 +3773,30 @@ export namespace Prisma {
   }
 
   /**
+   * Document.audioChunks
+   */
+  export type Document$audioChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    where?: AudioChunkWhereInput
+    orderBy?: AudioChunkOrderByWithRelationInput | AudioChunkOrderByWithRelationInput[]
+    cursor?: AudioChunkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AudioChunkScalarFieldEnum | AudioChunkScalarFieldEnum[]
+  }
+
+  /**
    * Document.playbackProgress
    */
   export type Document$playbackProgressArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3658,11 +3854,13 @@ export namespace Prisma {
   export type TextChunkAvgAggregateOutputType = {
     index: number | null
     tokenCount: number | null
+    audioDuration: number | null
   }
 
   export type TextChunkSumAggregateOutputType = {
     index: number | null
     tokenCount: number | null
+    audioDuration: number | null
   }
 
   export type TextChunkMinAggregateOutputType = {
@@ -3673,6 +3871,8 @@ export namespace Prisma {
     mode: $Enums.ProcessingMode | null
     processed: string | null
     audioPath: string | null
+    audioDuration: number | null
+    status: $Enums.ChunkStatus | null
     createdAt: Date | null
     documentId: string | null
   }
@@ -3685,6 +3885,8 @@ export namespace Prisma {
     mode: $Enums.ProcessingMode | null
     processed: string | null
     audioPath: string | null
+    audioDuration: number | null
+    status: $Enums.ChunkStatus | null
     createdAt: Date | null
     documentId: string | null
   }
@@ -3697,6 +3899,8 @@ export namespace Prisma {
     mode: number
     processed: number
     audioPath: number
+    audioDuration: number
+    status: number
     createdAt: number
     documentId: number
     _all: number
@@ -3706,11 +3910,13 @@ export namespace Prisma {
   export type TextChunkAvgAggregateInputType = {
     index?: true
     tokenCount?: true
+    audioDuration?: true
   }
 
   export type TextChunkSumAggregateInputType = {
     index?: true
     tokenCount?: true
+    audioDuration?: true
   }
 
   export type TextChunkMinAggregateInputType = {
@@ -3721,6 +3927,8 @@ export namespace Prisma {
     mode?: true
     processed?: true
     audioPath?: true
+    audioDuration?: true
+    status?: true
     createdAt?: true
     documentId?: true
   }
@@ -3733,6 +3941,8 @@ export namespace Prisma {
     mode?: true
     processed?: true
     audioPath?: true
+    audioDuration?: true
+    status?: true
     createdAt?: true
     documentId?: true
   }
@@ -3745,6 +3955,8 @@ export namespace Prisma {
     mode?: true
     processed?: true
     audioPath?: true
+    audioDuration?: true
+    status?: true
     createdAt?: true
     documentId?: true
     _all?: true
@@ -3844,6 +4056,8 @@ export namespace Prisma {
     mode: $Enums.ProcessingMode
     processed: string | null
     audioPath: string | null
+    audioDuration: number | null
+    status: $Enums.ChunkStatus
     createdAt: Date
     documentId: string
     _count: TextChunkCountAggregateOutputType | null
@@ -3875,6 +4089,8 @@ export namespace Prisma {
     mode?: boolean
     processed?: boolean
     audioPath?: boolean
+    audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
     document?: boolean | DocumentDefaultArgs<ExtArgs>
@@ -3888,6 +4104,8 @@ export namespace Prisma {
     mode?: boolean
     processed?: boolean
     audioPath?: boolean
+    audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
     document?: boolean | DocumentDefaultArgs<ExtArgs>
@@ -3901,6 +4119,8 @@ export namespace Prisma {
     mode?: boolean
     processed?: boolean
     audioPath?: boolean
+    audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
     document?: boolean | DocumentDefaultArgs<ExtArgs>
@@ -3914,11 +4134,13 @@ export namespace Prisma {
     mode?: boolean
     processed?: boolean
     audioPath?: boolean
+    audioDuration?: boolean
+    status?: boolean
     createdAt?: boolean
     documentId?: boolean
   }
 
-  export type TextChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "index" | "text" | "tokenCount" | "mode" | "processed" | "audioPath" | "createdAt" | "documentId", ExtArgs["result"]["textChunk"]>
+  export type TextChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "index" | "text" | "tokenCount" | "mode" | "processed" | "audioPath" | "audioDuration" | "status" | "createdAt" | "documentId", ExtArgs["result"]["textChunk"]>
   export type TextChunkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     document?: boolean | DocumentDefaultArgs<ExtArgs>
   }
@@ -3942,6 +4164,8 @@ export namespace Prisma {
       mode: $Enums.ProcessingMode
       processed: string | null
       audioPath: string | null
+      audioDuration: number | null
+      status: $Enums.ChunkStatus
       createdAt: Date
       documentId: string
     }, ExtArgs["result"]["textChunk"]>
@@ -4375,6 +4599,8 @@ export namespace Prisma {
     readonly mode: FieldRef<"TextChunk", 'ProcessingMode'>
     readonly processed: FieldRef<"TextChunk", 'String'>
     readonly audioPath: FieldRef<"TextChunk", 'String'>
+    readonly audioDuration: FieldRef<"TextChunk", 'Float'>
+    readonly status: FieldRef<"TextChunk", 'ChunkStatus'>
     readonly createdAt: FieldRef<"TextChunk", 'DateTime'>
     readonly documentId: FieldRef<"TextChunk", 'String'>
   }
@@ -4793,6 +5019,1133 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: TextChunkInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AudioChunk
+   */
+
+  export type AggregateAudioChunk = {
+    _count: AudioChunkCountAggregateOutputType | null
+    _avg: AudioChunkAvgAggregateOutputType | null
+    _sum: AudioChunkSumAggregateOutputType | null
+    _min: AudioChunkMinAggregateOutputType | null
+    _max: AudioChunkMaxAggregateOutputType | null
+  }
+
+  export type AudioChunkAvgAggregateOutputType = {
+    duration: number | null
+    chunkIndex: number | null
+  }
+
+  export type AudioChunkSumAggregateOutputType = {
+    duration: number | null
+    chunkIndex: number | null
+  }
+
+  export type AudioChunkMinAggregateOutputType = {
+    id: string | null
+    s3Key: string | null
+    s3Url: string | null
+    duration: number | null
+    createdAt: Date | null
+    documentId: string | null
+    chunkIndex: number | null
+  }
+
+  export type AudioChunkMaxAggregateOutputType = {
+    id: string | null
+    s3Key: string | null
+    s3Url: string | null
+    duration: number | null
+    createdAt: Date | null
+    documentId: string | null
+    chunkIndex: number | null
+  }
+
+  export type AudioChunkCountAggregateOutputType = {
+    id: number
+    s3Key: number
+    s3Url: number
+    duration: number
+    createdAt: number
+    documentId: number
+    chunkIndex: number
+    _all: number
+  }
+
+
+  export type AudioChunkAvgAggregateInputType = {
+    duration?: true
+    chunkIndex?: true
+  }
+
+  export type AudioChunkSumAggregateInputType = {
+    duration?: true
+    chunkIndex?: true
+  }
+
+  export type AudioChunkMinAggregateInputType = {
+    id?: true
+    s3Key?: true
+    s3Url?: true
+    duration?: true
+    createdAt?: true
+    documentId?: true
+    chunkIndex?: true
+  }
+
+  export type AudioChunkMaxAggregateInputType = {
+    id?: true
+    s3Key?: true
+    s3Url?: true
+    duration?: true
+    createdAt?: true
+    documentId?: true
+    chunkIndex?: true
+  }
+
+  export type AudioChunkCountAggregateInputType = {
+    id?: true
+    s3Key?: true
+    s3Url?: true
+    duration?: true
+    createdAt?: true
+    documentId?: true
+    chunkIndex?: true
+    _all?: true
+  }
+
+  export type AudioChunkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AudioChunk to aggregate.
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AudioChunks to fetch.
+     */
+    orderBy?: AudioChunkOrderByWithRelationInput | AudioChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AudioChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AudioChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AudioChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AudioChunks
+    **/
+    _count?: true | AudioChunkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AudioChunkAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AudioChunkSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AudioChunkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AudioChunkMaxAggregateInputType
+  }
+
+  export type GetAudioChunkAggregateType<T extends AudioChunkAggregateArgs> = {
+        [P in keyof T & keyof AggregateAudioChunk]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAudioChunk[P]>
+      : GetScalarType<T[P], AggregateAudioChunk[P]>
+  }
+
+
+
+
+  export type AudioChunkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AudioChunkWhereInput
+    orderBy?: AudioChunkOrderByWithAggregationInput | AudioChunkOrderByWithAggregationInput[]
+    by: AudioChunkScalarFieldEnum[] | AudioChunkScalarFieldEnum
+    having?: AudioChunkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AudioChunkCountAggregateInputType | true
+    _avg?: AudioChunkAvgAggregateInputType
+    _sum?: AudioChunkSumAggregateInputType
+    _min?: AudioChunkMinAggregateInputType
+    _max?: AudioChunkMaxAggregateInputType
+  }
+
+  export type AudioChunkGroupByOutputType = {
+    id: string
+    s3Key: string
+    s3Url: string
+    duration: number | null
+    createdAt: Date
+    documentId: string
+    chunkIndex: number
+    _count: AudioChunkCountAggregateOutputType | null
+    _avg: AudioChunkAvgAggregateOutputType | null
+    _sum: AudioChunkSumAggregateOutputType | null
+    _min: AudioChunkMinAggregateOutputType | null
+    _max: AudioChunkMaxAggregateOutputType | null
+  }
+
+  type GetAudioChunkGroupByPayload<T extends AudioChunkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AudioChunkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AudioChunkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AudioChunkGroupByOutputType[P]>
+            : GetScalarType<T[P], AudioChunkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AudioChunkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    s3Key?: boolean
+    s3Url?: boolean
+    duration?: boolean
+    createdAt?: boolean
+    documentId?: boolean
+    chunkIndex?: boolean
+    document?: boolean | DocumentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["audioChunk"]>
+
+  export type AudioChunkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    s3Key?: boolean
+    s3Url?: boolean
+    duration?: boolean
+    createdAt?: boolean
+    documentId?: boolean
+    chunkIndex?: boolean
+    document?: boolean | DocumentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["audioChunk"]>
+
+  export type AudioChunkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    s3Key?: boolean
+    s3Url?: boolean
+    duration?: boolean
+    createdAt?: boolean
+    documentId?: boolean
+    chunkIndex?: boolean
+    document?: boolean | DocumentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["audioChunk"]>
+
+  export type AudioChunkSelectScalar = {
+    id?: boolean
+    s3Key?: boolean
+    s3Url?: boolean
+    duration?: boolean
+    createdAt?: boolean
+    documentId?: boolean
+    chunkIndex?: boolean
+  }
+
+  export type AudioChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "s3Key" | "s3Url" | "duration" | "createdAt" | "documentId" | "chunkIndex", ExtArgs["result"]["audioChunk"]>
+  export type AudioChunkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    document?: boolean | DocumentDefaultArgs<ExtArgs>
+  }
+  export type AudioChunkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    document?: boolean | DocumentDefaultArgs<ExtArgs>
+  }
+  export type AudioChunkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    document?: boolean | DocumentDefaultArgs<ExtArgs>
+  }
+
+  export type $AudioChunkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AudioChunk"
+    objects: {
+      document: Prisma.$DocumentPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      s3Key: string
+      s3Url: string
+      duration: number | null
+      createdAt: Date
+      documentId: string
+      chunkIndex: number
+    }, ExtArgs["result"]["audioChunk"]>
+    composites: {}
+  }
+
+  type AudioChunkGetPayload<S extends boolean | null | undefined | AudioChunkDefaultArgs> = $Result.GetResult<Prisma.$AudioChunkPayload, S>
+
+  type AudioChunkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AudioChunkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AudioChunkCountAggregateInputType | true
+    }
+
+  export interface AudioChunkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AudioChunk'], meta: { name: 'AudioChunk' } }
+    /**
+     * Find zero or one AudioChunk that matches the filter.
+     * @param {AudioChunkFindUniqueArgs} args - Arguments to find a AudioChunk
+     * @example
+     * // Get one AudioChunk
+     * const audioChunk = await prisma.audioChunk.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AudioChunkFindUniqueArgs>(args: SelectSubset<T, AudioChunkFindUniqueArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AudioChunk that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AudioChunkFindUniqueOrThrowArgs} args - Arguments to find a AudioChunk
+     * @example
+     * // Get one AudioChunk
+     * const audioChunk = await prisma.audioChunk.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AudioChunkFindUniqueOrThrowArgs>(args: SelectSubset<T, AudioChunkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AudioChunk that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkFindFirstArgs} args - Arguments to find a AudioChunk
+     * @example
+     * // Get one AudioChunk
+     * const audioChunk = await prisma.audioChunk.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AudioChunkFindFirstArgs>(args?: SelectSubset<T, AudioChunkFindFirstArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AudioChunk that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkFindFirstOrThrowArgs} args - Arguments to find a AudioChunk
+     * @example
+     * // Get one AudioChunk
+     * const audioChunk = await prisma.audioChunk.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AudioChunkFindFirstOrThrowArgs>(args?: SelectSubset<T, AudioChunkFindFirstOrThrowArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AudioChunks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AudioChunks
+     * const audioChunks = await prisma.audioChunk.findMany()
+     * 
+     * // Get first 10 AudioChunks
+     * const audioChunks = await prisma.audioChunk.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const audioChunkWithIdOnly = await prisma.audioChunk.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AudioChunkFindManyArgs>(args?: SelectSubset<T, AudioChunkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AudioChunk.
+     * @param {AudioChunkCreateArgs} args - Arguments to create a AudioChunk.
+     * @example
+     * // Create one AudioChunk
+     * const AudioChunk = await prisma.audioChunk.create({
+     *   data: {
+     *     // ... data to create a AudioChunk
+     *   }
+     * })
+     * 
+     */
+    create<T extends AudioChunkCreateArgs>(args: SelectSubset<T, AudioChunkCreateArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AudioChunks.
+     * @param {AudioChunkCreateManyArgs} args - Arguments to create many AudioChunks.
+     * @example
+     * // Create many AudioChunks
+     * const audioChunk = await prisma.audioChunk.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AudioChunkCreateManyArgs>(args?: SelectSubset<T, AudioChunkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AudioChunks and returns the data saved in the database.
+     * @param {AudioChunkCreateManyAndReturnArgs} args - Arguments to create many AudioChunks.
+     * @example
+     * // Create many AudioChunks
+     * const audioChunk = await prisma.audioChunk.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AudioChunks and only return the `id`
+     * const audioChunkWithIdOnly = await prisma.audioChunk.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AudioChunkCreateManyAndReturnArgs>(args?: SelectSubset<T, AudioChunkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AudioChunk.
+     * @param {AudioChunkDeleteArgs} args - Arguments to delete one AudioChunk.
+     * @example
+     * // Delete one AudioChunk
+     * const AudioChunk = await prisma.audioChunk.delete({
+     *   where: {
+     *     // ... filter to delete one AudioChunk
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AudioChunkDeleteArgs>(args: SelectSubset<T, AudioChunkDeleteArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AudioChunk.
+     * @param {AudioChunkUpdateArgs} args - Arguments to update one AudioChunk.
+     * @example
+     * // Update one AudioChunk
+     * const audioChunk = await prisma.audioChunk.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AudioChunkUpdateArgs>(args: SelectSubset<T, AudioChunkUpdateArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AudioChunks.
+     * @param {AudioChunkDeleteManyArgs} args - Arguments to filter AudioChunks to delete.
+     * @example
+     * // Delete a few AudioChunks
+     * const { count } = await prisma.audioChunk.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AudioChunkDeleteManyArgs>(args?: SelectSubset<T, AudioChunkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AudioChunks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AudioChunks
+     * const audioChunk = await prisma.audioChunk.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AudioChunkUpdateManyArgs>(args: SelectSubset<T, AudioChunkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AudioChunks and returns the data updated in the database.
+     * @param {AudioChunkUpdateManyAndReturnArgs} args - Arguments to update many AudioChunks.
+     * @example
+     * // Update many AudioChunks
+     * const audioChunk = await prisma.audioChunk.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AudioChunks and only return the `id`
+     * const audioChunkWithIdOnly = await prisma.audioChunk.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AudioChunkUpdateManyAndReturnArgs>(args: SelectSubset<T, AudioChunkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AudioChunk.
+     * @param {AudioChunkUpsertArgs} args - Arguments to update or create a AudioChunk.
+     * @example
+     * // Update or create a AudioChunk
+     * const audioChunk = await prisma.audioChunk.upsert({
+     *   create: {
+     *     // ... data to create a AudioChunk
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AudioChunk we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AudioChunkUpsertArgs>(args: SelectSubset<T, AudioChunkUpsertArgs<ExtArgs>>): Prisma__AudioChunkClient<$Result.GetResult<Prisma.$AudioChunkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AudioChunks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkCountArgs} args - Arguments to filter AudioChunks to count.
+     * @example
+     * // Count the number of AudioChunks
+     * const count = await prisma.audioChunk.count({
+     *   where: {
+     *     // ... the filter for the AudioChunks we want to count
+     *   }
+     * })
+    **/
+    count<T extends AudioChunkCountArgs>(
+      args?: Subset<T, AudioChunkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AudioChunkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AudioChunk.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AudioChunkAggregateArgs>(args: Subset<T, AudioChunkAggregateArgs>): Prisma.PrismaPromise<GetAudioChunkAggregateType<T>>
+
+    /**
+     * Group by AudioChunk.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AudioChunkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AudioChunkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AudioChunkGroupByArgs['orderBy'] }
+        : { orderBy?: AudioChunkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AudioChunkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAudioChunkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AudioChunk model
+   */
+  readonly fields: AudioChunkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AudioChunk.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AudioChunkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    document<T extends DocumentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DocumentDefaultArgs<ExtArgs>>): Prisma__DocumentClient<$Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AudioChunk model
+   */
+  interface AudioChunkFieldRefs {
+    readonly id: FieldRef<"AudioChunk", 'String'>
+    readonly s3Key: FieldRef<"AudioChunk", 'String'>
+    readonly s3Url: FieldRef<"AudioChunk", 'String'>
+    readonly duration: FieldRef<"AudioChunk", 'Float'>
+    readonly createdAt: FieldRef<"AudioChunk", 'DateTime'>
+    readonly documentId: FieldRef<"AudioChunk", 'String'>
+    readonly chunkIndex: FieldRef<"AudioChunk", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AudioChunk findUnique
+   */
+  export type AudioChunkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which AudioChunk to fetch.
+     */
+    where: AudioChunkWhereUniqueInput
+  }
+
+  /**
+   * AudioChunk findUniqueOrThrow
+   */
+  export type AudioChunkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which AudioChunk to fetch.
+     */
+    where: AudioChunkWhereUniqueInput
+  }
+
+  /**
+   * AudioChunk findFirst
+   */
+  export type AudioChunkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which AudioChunk to fetch.
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AudioChunks to fetch.
+     */
+    orderBy?: AudioChunkOrderByWithRelationInput | AudioChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AudioChunks.
+     */
+    cursor?: AudioChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AudioChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AudioChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AudioChunks.
+     */
+    distinct?: AudioChunkScalarFieldEnum | AudioChunkScalarFieldEnum[]
+  }
+
+  /**
+   * AudioChunk findFirstOrThrow
+   */
+  export type AudioChunkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which AudioChunk to fetch.
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AudioChunks to fetch.
+     */
+    orderBy?: AudioChunkOrderByWithRelationInput | AudioChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AudioChunks.
+     */
+    cursor?: AudioChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AudioChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AudioChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AudioChunks.
+     */
+    distinct?: AudioChunkScalarFieldEnum | AudioChunkScalarFieldEnum[]
+  }
+
+  /**
+   * AudioChunk findMany
+   */
+  export type AudioChunkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which AudioChunks to fetch.
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AudioChunks to fetch.
+     */
+    orderBy?: AudioChunkOrderByWithRelationInput | AudioChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AudioChunks.
+     */
+    cursor?: AudioChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AudioChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AudioChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AudioChunks.
+     */
+    distinct?: AudioChunkScalarFieldEnum | AudioChunkScalarFieldEnum[]
+  }
+
+  /**
+   * AudioChunk create
+   */
+  export type AudioChunkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AudioChunk.
+     */
+    data: XOR<AudioChunkCreateInput, AudioChunkUncheckedCreateInput>
+  }
+
+  /**
+   * AudioChunk createMany
+   */
+  export type AudioChunkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AudioChunks.
+     */
+    data: AudioChunkCreateManyInput | AudioChunkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AudioChunk createManyAndReturn
+   */
+  export type AudioChunkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * The data used to create many AudioChunks.
+     */
+    data: AudioChunkCreateManyInput | AudioChunkCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AudioChunk update
+   */
+  export type AudioChunkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AudioChunk.
+     */
+    data: XOR<AudioChunkUpdateInput, AudioChunkUncheckedUpdateInput>
+    /**
+     * Choose, which AudioChunk to update.
+     */
+    where: AudioChunkWhereUniqueInput
+  }
+
+  /**
+   * AudioChunk updateMany
+   */
+  export type AudioChunkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AudioChunks.
+     */
+    data: XOR<AudioChunkUpdateManyMutationInput, AudioChunkUncheckedUpdateManyInput>
+    /**
+     * Filter which AudioChunks to update
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * Limit how many AudioChunks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AudioChunk updateManyAndReturn
+   */
+  export type AudioChunkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * The data used to update AudioChunks.
+     */
+    data: XOR<AudioChunkUpdateManyMutationInput, AudioChunkUncheckedUpdateManyInput>
+    /**
+     * Filter which AudioChunks to update
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * Limit how many AudioChunks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AudioChunk upsert
+   */
+  export type AudioChunkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AudioChunk to update in case it exists.
+     */
+    where: AudioChunkWhereUniqueInput
+    /**
+     * In case the AudioChunk found by the `where` argument doesn't exist, create a new AudioChunk with this data.
+     */
+    create: XOR<AudioChunkCreateInput, AudioChunkUncheckedCreateInput>
+    /**
+     * In case the AudioChunk was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AudioChunkUpdateInput, AudioChunkUncheckedUpdateInput>
+  }
+
+  /**
+   * AudioChunk delete
+   */
+  export type AudioChunkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
+    /**
+     * Filter which AudioChunk to delete.
+     */
+    where: AudioChunkWhereUniqueInput
+  }
+
+  /**
+   * AudioChunk deleteMany
+   */
+  export type AudioChunkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AudioChunks to delete
+     */
+    where?: AudioChunkWhereInput
+    /**
+     * Limit how many AudioChunks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AudioChunk without action
+   */
+  export type AudioChunkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AudioChunk
+     */
+    select?: AudioChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AudioChunk
+     */
+    omit?: AudioChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AudioChunkInclude<ExtArgs> | null
   }
 
 
@@ -5966,6 +7319,9 @@ export namespace Prisma {
     pageCount: 'pageCount',
     extractedText: 'extractedText',
     status: 'status',
+    audioDuration: 'audioDuration',
+    totalChunks: 'totalChunks',
+    processedChunks: 'processedChunks',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     errorMessage: 'errorMessage',
@@ -5985,11 +7341,26 @@ export namespace Prisma {
     mode: 'mode',
     processed: 'processed',
     audioPath: 'audioPath',
+    audioDuration: 'audioDuration',
+    status: 'status',
     createdAt: 'createdAt',
     documentId: 'documentId'
   };
 
   export type TextChunkScalarFieldEnum = (typeof TextChunkScalarFieldEnum)[keyof typeof TextChunkScalarFieldEnum]
+
+
+  export const AudioChunkScalarFieldEnum: {
+    id: 'id',
+    s3Key: 's3Key',
+    s3Url: 's3Url',
+    duration: 'duration',
+    createdAt: 'createdAt',
+    documentId: 'documentId',
+    chunkIndex: 'chunkIndex'
+  };
+
+  export type AudioChunkScalarFieldEnum = (typeof AudioChunkScalarFieldEnum)[keyof typeof AudioChunkScalarFieldEnum]
 
 
   export const PlaybackProgressScalarFieldEnum: {
@@ -6098,6 +7469,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
    * Reference to a field of type 'ProcessingMode'
    */
   export type EnumProcessingModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProcessingMode'>
@@ -6112,16 +7497,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
+   * Reference to a field of type 'ChunkStatus'
    */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+  export type EnumChunkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkStatus'>
     
 
 
   /**
-   * Reference to a field of type 'Float[]'
+   * Reference to a field of type 'ChunkStatus[]'
    */
-  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+  export type ListEnumChunkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkStatus[]'>
     
   /**
    * Deep Input Types
@@ -6203,6 +7588,9 @@ export namespace Prisma {
     pageCount?: IntNullableFilter<"Document"> | number | null
     extractedText?: StringNullableFilter<"Document"> | string | null
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
+    audioDuration?: FloatNullableFilter<"Document"> | number | null
+    totalChunks?: IntFilter<"Document"> | number
+    processedChunks?: IntFilter<"Document"> | number
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
     errorMessage?: StringNullableFilter<"Document"> | string | null
@@ -6211,6 +7599,7 @@ export namespace Prisma {
     userId?: StringFilter<"Document"> | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     chunks?: TextChunkListRelationFilter
+    audioChunks?: AudioChunkListRelationFilter
     playbackProgress?: PlaybackProgressListRelationFilter
   }
 
@@ -6223,6 +7612,9 @@ export namespace Prisma {
     pageCount?: SortOrderInput | SortOrder
     extractedText?: SortOrderInput | SortOrder
     status?: SortOrder
+    audioDuration?: SortOrderInput | SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrderInput | SortOrder
@@ -6231,6 +7623,7 @@ export namespace Prisma {
     userId?: SortOrder
     user?: UserOrderByWithRelationInput
     chunks?: TextChunkOrderByRelationAggregateInput
+    audioChunks?: AudioChunkOrderByRelationAggregateInput
     playbackProgress?: PlaybackProgressOrderByRelationAggregateInput
   }
 
@@ -6246,6 +7639,9 @@ export namespace Prisma {
     pageCount?: IntNullableFilter<"Document"> | number | null
     extractedText?: StringNullableFilter<"Document"> | string | null
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
+    audioDuration?: FloatNullableFilter<"Document"> | number | null
+    totalChunks?: IntFilter<"Document"> | number
+    processedChunks?: IntFilter<"Document"> | number
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
     errorMessage?: StringNullableFilter<"Document"> | string | null
@@ -6254,6 +7650,7 @@ export namespace Prisma {
     userId?: StringFilter<"Document"> | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     chunks?: TextChunkListRelationFilter
+    audioChunks?: AudioChunkListRelationFilter
     playbackProgress?: PlaybackProgressListRelationFilter
   }, "id">
 
@@ -6266,6 +7663,9 @@ export namespace Prisma {
     pageCount?: SortOrderInput | SortOrder
     extractedText?: SortOrderInput | SortOrder
     status?: SortOrder
+    audioDuration?: SortOrderInput | SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrderInput | SortOrder
@@ -6291,6 +7691,9 @@ export namespace Prisma {
     pageCount?: IntNullableWithAggregatesFilter<"Document"> | number | null
     extractedText?: StringNullableWithAggregatesFilter<"Document"> | string | null
     status?: EnumDocumentStatusWithAggregatesFilter<"Document"> | $Enums.DocumentStatus
+    audioDuration?: FloatNullableWithAggregatesFilter<"Document"> | number | null
+    totalChunks?: IntWithAggregatesFilter<"Document"> | number
+    processedChunks?: IntWithAggregatesFilter<"Document"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Document"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Document"> | Date | string
     errorMessage?: StringNullableWithAggregatesFilter<"Document"> | string | null
@@ -6310,6 +7713,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFilter<"TextChunk"> | $Enums.ProcessingMode
     processed?: StringNullableFilter<"TextChunk"> | string | null
     audioPath?: StringNullableFilter<"TextChunk"> | string | null
+    audioDuration?: FloatNullableFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeFilter<"TextChunk"> | Date | string
     documentId?: StringFilter<"TextChunk"> | string
     document?: XOR<DocumentScalarRelationFilter, DocumentWhereInput>
@@ -6323,6 +7728,8 @@ export namespace Prisma {
     mode?: SortOrder
     processed?: SortOrderInput | SortOrder
     audioPath?: SortOrderInput | SortOrder
+    audioDuration?: SortOrderInput | SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     document?: DocumentOrderByWithRelationInput
@@ -6340,6 +7747,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFilter<"TextChunk"> | $Enums.ProcessingMode
     processed?: StringNullableFilter<"TextChunk"> | string | null
     audioPath?: StringNullableFilter<"TextChunk"> | string | null
+    audioDuration?: FloatNullableFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeFilter<"TextChunk"> | Date | string
     documentId?: StringFilter<"TextChunk"> | string
     document?: XOR<DocumentScalarRelationFilter, DocumentWhereInput>
@@ -6353,6 +7762,8 @@ export namespace Prisma {
     mode?: SortOrder
     processed?: SortOrderInput | SortOrder
     audioPath?: SortOrderInput | SortOrder
+    audioDuration?: SortOrderInput | SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     _count?: TextChunkCountOrderByAggregateInput
@@ -6373,8 +7784,78 @@ export namespace Prisma {
     mode?: EnumProcessingModeWithAggregatesFilter<"TextChunk"> | $Enums.ProcessingMode
     processed?: StringNullableWithAggregatesFilter<"TextChunk"> | string | null
     audioPath?: StringNullableWithAggregatesFilter<"TextChunk"> | string | null
+    audioDuration?: FloatNullableWithAggregatesFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusWithAggregatesFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeWithAggregatesFilter<"TextChunk"> | Date | string
     documentId?: StringWithAggregatesFilter<"TextChunk"> | string
+  }
+
+  export type AudioChunkWhereInput = {
+    AND?: AudioChunkWhereInput | AudioChunkWhereInput[]
+    OR?: AudioChunkWhereInput[]
+    NOT?: AudioChunkWhereInput | AudioChunkWhereInput[]
+    id?: StringFilter<"AudioChunk"> | string
+    s3Key?: StringFilter<"AudioChunk"> | string
+    s3Url?: StringFilter<"AudioChunk"> | string
+    duration?: FloatNullableFilter<"AudioChunk"> | number | null
+    createdAt?: DateTimeFilter<"AudioChunk"> | Date | string
+    documentId?: StringFilter<"AudioChunk"> | string
+    chunkIndex?: IntFilter<"AudioChunk"> | number
+    document?: XOR<DocumentScalarRelationFilter, DocumentWhereInput>
+  }
+
+  export type AudioChunkOrderByWithRelationInput = {
+    id?: SortOrder
+    s3Key?: SortOrder
+    s3Url?: SortOrder
+    duration?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    documentId?: SortOrder
+    chunkIndex?: SortOrder
+    document?: DocumentOrderByWithRelationInput
+  }
+
+  export type AudioChunkWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    documentId_chunkIndex?: AudioChunkDocumentIdChunkIndexCompoundUniqueInput
+    AND?: AudioChunkWhereInput | AudioChunkWhereInput[]
+    OR?: AudioChunkWhereInput[]
+    NOT?: AudioChunkWhereInput | AudioChunkWhereInput[]
+    s3Key?: StringFilter<"AudioChunk"> | string
+    s3Url?: StringFilter<"AudioChunk"> | string
+    duration?: FloatNullableFilter<"AudioChunk"> | number | null
+    createdAt?: DateTimeFilter<"AudioChunk"> | Date | string
+    documentId?: StringFilter<"AudioChunk"> | string
+    chunkIndex?: IntFilter<"AudioChunk"> | number
+    document?: XOR<DocumentScalarRelationFilter, DocumentWhereInput>
+  }, "id" | "documentId_chunkIndex">
+
+  export type AudioChunkOrderByWithAggregationInput = {
+    id?: SortOrder
+    s3Key?: SortOrder
+    s3Url?: SortOrder
+    duration?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    documentId?: SortOrder
+    chunkIndex?: SortOrder
+    _count?: AudioChunkCountOrderByAggregateInput
+    _avg?: AudioChunkAvgOrderByAggregateInput
+    _max?: AudioChunkMaxOrderByAggregateInput
+    _min?: AudioChunkMinOrderByAggregateInput
+    _sum?: AudioChunkSumOrderByAggregateInput
+  }
+
+  export type AudioChunkScalarWhereWithAggregatesInput = {
+    AND?: AudioChunkScalarWhereWithAggregatesInput | AudioChunkScalarWhereWithAggregatesInput[]
+    OR?: AudioChunkScalarWhereWithAggregatesInput[]
+    NOT?: AudioChunkScalarWhereWithAggregatesInput | AudioChunkScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AudioChunk"> | string
+    s3Key?: StringWithAggregatesFilter<"AudioChunk"> | string
+    s3Url?: StringWithAggregatesFilter<"AudioChunk"> | string
+    duration?: FloatNullableWithAggregatesFilter<"AudioChunk"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"AudioChunk"> | Date | string
+    documentId?: StringWithAggregatesFilter<"AudioChunk"> | string
+    chunkIndex?: IntWithAggregatesFilter<"AudioChunk"> | number
   }
 
   export type PlaybackProgressWhereInput = {
@@ -6528,6 +8009,9 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -6535,6 +8019,7 @@ export namespace Prisma {
     failedAt?: Date | string | null
     user: UserCreateNestedOneWithoutDocumentsInput
     chunks?: TextChunkCreateNestedManyWithoutDocumentInput
+    audioChunks?: AudioChunkCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
   }
 
@@ -6547,6 +8032,9 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -6554,6 +8042,7 @@ export namespace Prisma {
     failedAt?: Date | string | null
     userId: string
     chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
+    audioChunks?: AudioChunkUncheckedCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
   }
 
@@ -6566,6 +8055,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6573,6 +8065,7 @@ export namespace Prisma {
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
     chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
+    audioChunks?: AudioChunkUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
   }
 
@@ -6585,6 +8078,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6592,6 +8088,7 @@ export namespace Prisma {
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
     chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
+    audioChunks?: AudioChunkUncheckedUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
   }
 
@@ -6604,6 +8101,9 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -6621,6 +8121,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6637,6 +8140,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6653,6 +8159,8 @@ export namespace Prisma {
     mode?: $Enums.ProcessingMode
     processed?: string | null
     audioPath?: string | null
+    audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
     document: DocumentCreateNestedOneWithoutChunksInput
   }
@@ -6665,6 +8173,8 @@ export namespace Prisma {
     mode?: $Enums.ProcessingMode
     processed?: string | null
     audioPath?: string | null
+    audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
     documentId: string
   }
@@ -6677,6 +8187,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     document?: DocumentUpdateOneRequiredWithoutChunksNestedInput
   }
@@ -6689,6 +8201,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     documentId?: StringFieldUpdateOperationsInput | string
   }
@@ -6701,6 +8215,8 @@ export namespace Prisma {
     mode?: $Enums.ProcessingMode
     processed?: string | null
     audioPath?: string | null
+    audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
     documentId: string
   }
@@ -6713,6 +8229,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -6724,8 +8242,79 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     documentId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AudioChunkCreateInput = {
+    id?: string
+    s3Key: string
+    s3Url: string
+    duration?: number | null
+    createdAt?: Date | string
+    chunkIndex: number
+    document: DocumentCreateNestedOneWithoutAudioChunksInput
+  }
+
+  export type AudioChunkUncheckedCreateInput = {
+    id?: string
+    s3Key: string
+    s3Url: string
+    duration?: number | null
+    createdAt?: Date | string
+    documentId: string
+    chunkIndex: number
+  }
+
+  export type AudioChunkUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
+    document?: DocumentUpdateOneRequiredWithoutAudioChunksNestedInput
+  }
+
+  export type AudioChunkUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentId?: StringFieldUpdateOperationsInput | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AudioChunkCreateManyInput = {
+    id?: string
+    s3Key: string
+    s3Url: string
+    duration?: number | null
+    createdAt?: Date | string
+    documentId: string
+    chunkIndex: number
+  }
+
+  export type AudioChunkUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AudioChunkUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentId?: StringFieldUpdateOperationsInput | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
   }
 
   export type PlaybackProgressCreateInput = {
@@ -6970,6 +8559,28 @@ export namespace Prisma {
     not?: NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
   }
 
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -6992,7 +8603,17 @@ export namespace Prisma {
     none?: TextChunkWhereInput
   }
 
+  export type AudioChunkListRelationFilter = {
+    every?: AudioChunkWhereInput
+    some?: AudioChunkWhereInput
+    none?: AudioChunkWhereInput
+  }
+
   export type TextChunkOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AudioChunkOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -7005,6 +8626,9 @@ export namespace Prisma {
     pageCount?: SortOrder
     extractedText?: SortOrder
     status?: SortOrder
+    audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrder
@@ -7016,6 +8640,9 @@ export namespace Prisma {
   export type DocumentAvgOrderByAggregateInput = {
     fileSize?: SortOrder
     pageCount?: SortOrder
+    audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
   }
 
   export type DocumentMaxOrderByAggregateInput = {
@@ -7027,6 +8654,9 @@ export namespace Prisma {
     pageCount?: SortOrder
     extractedText?: SortOrder
     status?: SortOrder
+    audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrder
@@ -7044,6 +8674,9 @@ export namespace Prisma {
     pageCount?: SortOrder
     extractedText?: SortOrder
     status?: SortOrder
+    audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     errorMessage?: SortOrder
@@ -7055,6 +8688,9 @@ export namespace Prisma {
   export type DocumentSumOrderByAggregateInput = {
     fileSize?: SortOrder
     pageCount?: SortOrder
+    audioDuration?: SortOrder
+    totalChunks?: SortOrder
+    processedChunks?: SortOrder
   }
 
   export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -7083,6 +8719,38 @@ export namespace Prisma {
     _max?: NestedEnumDocumentStatusFilter<$PrismaModel>
   }
 
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -7097,22 +8765,18 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
-  }
-
   export type EnumProcessingModeFilter<$PrismaModel = never> = {
     equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
     in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
     notIn?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
     not?: NestedEnumProcessingModeFilter<$PrismaModel> | $Enums.ProcessingMode
+  }
+
+  export type EnumChunkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusFilter<$PrismaModel> | $Enums.ChunkStatus
   }
 
   export type DocumentScalarRelationFilter = {
@@ -7134,6 +8798,8 @@ export namespace Prisma {
     mode?: SortOrder
     processed?: SortOrder
     audioPath?: SortOrder
+    audioDuration?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
   }
@@ -7141,6 +8807,7 @@ export namespace Prisma {
   export type TextChunkAvgOrderByAggregateInput = {
     index?: SortOrder
     tokenCount?: SortOrder
+    audioDuration?: SortOrder
   }
 
   export type TextChunkMaxOrderByAggregateInput = {
@@ -7151,6 +8818,8 @@ export namespace Prisma {
     mode?: SortOrder
     processed?: SortOrder
     audioPath?: SortOrder
+    audioDuration?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
   }
@@ -7163,6 +8832,8 @@ export namespace Prisma {
     mode?: SortOrder
     processed?: SortOrder
     audioPath?: SortOrder
+    audioDuration?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
   }
@@ -7170,22 +8841,7 @@ export namespace Prisma {
   export type TextChunkSumOrderByAggregateInput = {
     index?: SortOrder
     tokenCount?: SortOrder
-  }
-
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
+    audioDuration?: SortOrder
   }
 
   export type EnumProcessingModeWithAggregatesFilter<$PrismaModel = never> = {
@@ -7196,6 +8852,61 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumProcessingModeFilter<$PrismaModel>
     _max?: NestedEnumProcessingModeFilter<$PrismaModel>
+  }
+
+  export type EnumChunkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusWithAggregatesFilter<$PrismaModel> | $Enums.ChunkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChunkStatusFilter<$PrismaModel>
+    _max?: NestedEnumChunkStatusFilter<$PrismaModel>
+  }
+
+  export type AudioChunkDocumentIdChunkIndexCompoundUniqueInput = {
+    documentId: string
+    chunkIndex: number
+  }
+
+  export type AudioChunkCountOrderByAggregateInput = {
+    id?: SortOrder
+    s3Key?: SortOrder
+    s3Url?: SortOrder
+    duration?: SortOrder
+    createdAt?: SortOrder
+    documentId?: SortOrder
+    chunkIndex?: SortOrder
+  }
+
+  export type AudioChunkAvgOrderByAggregateInput = {
+    duration?: SortOrder
+    chunkIndex?: SortOrder
+  }
+
+  export type AudioChunkMaxOrderByAggregateInput = {
+    id?: SortOrder
+    s3Key?: SortOrder
+    s3Url?: SortOrder
+    duration?: SortOrder
+    createdAt?: SortOrder
+    documentId?: SortOrder
+    chunkIndex?: SortOrder
+  }
+
+  export type AudioChunkMinOrderByAggregateInput = {
+    id?: SortOrder
+    s3Key?: SortOrder
+    s3Url?: SortOrder
+    duration?: SortOrder
+    createdAt?: SortOrder
+    documentId?: SortOrder
+    chunkIndex?: SortOrder
+  }
+
+  export type AudioChunkSumOrderByAggregateInput = {
+    duration?: SortOrder
+    chunkIndex?: SortOrder
   }
 
   export type FloatFilter<$PrismaModel = never> = {
@@ -7383,6 +9094,13 @@ export namespace Prisma {
     connect?: TextChunkWhereUniqueInput | TextChunkWhereUniqueInput[]
   }
 
+  export type AudioChunkCreateNestedManyWithoutDocumentInput = {
+    create?: XOR<AudioChunkCreateWithoutDocumentInput, AudioChunkUncheckedCreateWithoutDocumentInput> | AudioChunkCreateWithoutDocumentInput[] | AudioChunkUncheckedCreateWithoutDocumentInput[]
+    connectOrCreate?: AudioChunkCreateOrConnectWithoutDocumentInput | AudioChunkCreateOrConnectWithoutDocumentInput[]
+    createMany?: AudioChunkCreateManyDocumentInputEnvelope
+    connect?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+  }
+
   export type PlaybackProgressCreateNestedManyWithoutDocumentInput = {
     create?: XOR<PlaybackProgressCreateWithoutDocumentInput, PlaybackProgressUncheckedCreateWithoutDocumentInput> | PlaybackProgressCreateWithoutDocumentInput[] | PlaybackProgressUncheckedCreateWithoutDocumentInput[]
     connectOrCreate?: PlaybackProgressCreateOrConnectWithoutDocumentInput | PlaybackProgressCreateOrConnectWithoutDocumentInput[]
@@ -7395,6 +9113,13 @@ export namespace Prisma {
     connectOrCreate?: TextChunkCreateOrConnectWithoutDocumentInput | TextChunkCreateOrConnectWithoutDocumentInput[]
     createMany?: TextChunkCreateManyDocumentInputEnvelope
     connect?: TextChunkWhereUniqueInput | TextChunkWhereUniqueInput[]
+  }
+
+  export type AudioChunkUncheckedCreateNestedManyWithoutDocumentInput = {
+    create?: XOR<AudioChunkCreateWithoutDocumentInput, AudioChunkUncheckedCreateWithoutDocumentInput> | AudioChunkCreateWithoutDocumentInput[] | AudioChunkUncheckedCreateWithoutDocumentInput[]
+    connectOrCreate?: AudioChunkCreateOrConnectWithoutDocumentInput | AudioChunkCreateOrConnectWithoutDocumentInput[]
+    createMany?: AudioChunkCreateManyDocumentInputEnvelope
+    connect?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
   }
 
   export type PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput = {
@@ -7414,6 +9139,22 @@ export namespace Prisma {
 
   export type EnumDocumentStatusFieldUpdateOperationsInput = {
     set?: $Enums.DocumentStatus
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -7440,6 +9181,20 @@ export namespace Prisma {
     update?: TextChunkUpdateWithWhereUniqueWithoutDocumentInput | TextChunkUpdateWithWhereUniqueWithoutDocumentInput[]
     updateMany?: TextChunkUpdateManyWithWhereWithoutDocumentInput | TextChunkUpdateManyWithWhereWithoutDocumentInput[]
     deleteMany?: TextChunkScalarWhereInput | TextChunkScalarWhereInput[]
+  }
+
+  export type AudioChunkUpdateManyWithoutDocumentNestedInput = {
+    create?: XOR<AudioChunkCreateWithoutDocumentInput, AudioChunkUncheckedCreateWithoutDocumentInput> | AudioChunkCreateWithoutDocumentInput[] | AudioChunkUncheckedCreateWithoutDocumentInput[]
+    connectOrCreate?: AudioChunkCreateOrConnectWithoutDocumentInput | AudioChunkCreateOrConnectWithoutDocumentInput[]
+    upsert?: AudioChunkUpsertWithWhereUniqueWithoutDocumentInput | AudioChunkUpsertWithWhereUniqueWithoutDocumentInput[]
+    createMany?: AudioChunkCreateManyDocumentInputEnvelope
+    set?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    disconnect?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    delete?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    connect?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    update?: AudioChunkUpdateWithWhereUniqueWithoutDocumentInput | AudioChunkUpdateWithWhereUniqueWithoutDocumentInput[]
+    updateMany?: AudioChunkUpdateManyWithWhereWithoutDocumentInput | AudioChunkUpdateManyWithWhereWithoutDocumentInput[]
+    deleteMany?: AudioChunkScalarWhereInput | AudioChunkScalarWhereInput[]
   }
 
   export type PlaybackProgressUpdateManyWithoutDocumentNestedInput = {
@@ -7470,6 +9225,20 @@ export namespace Prisma {
     deleteMany?: TextChunkScalarWhereInput | TextChunkScalarWhereInput[]
   }
 
+  export type AudioChunkUncheckedUpdateManyWithoutDocumentNestedInput = {
+    create?: XOR<AudioChunkCreateWithoutDocumentInput, AudioChunkUncheckedCreateWithoutDocumentInput> | AudioChunkCreateWithoutDocumentInput[] | AudioChunkUncheckedCreateWithoutDocumentInput[]
+    connectOrCreate?: AudioChunkCreateOrConnectWithoutDocumentInput | AudioChunkCreateOrConnectWithoutDocumentInput[]
+    upsert?: AudioChunkUpsertWithWhereUniqueWithoutDocumentInput | AudioChunkUpsertWithWhereUniqueWithoutDocumentInput[]
+    createMany?: AudioChunkCreateManyDocumentInputEnvelope
+    set?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    disconnect?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    delete?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    connect?: AudioChunkWhereUniqueInput | AudioChunkWhereUniqueInput[]
+    update?: AudioChunkUpdateWithWhereUniqueWithoutDocumentInput | AudioChunkUpdateWithWhereUniqueWithoutDocumentInput[]
+    updateMany?: AudioChunkUpdateManyWithWhereWithoutDocumentInput | AudioChunkUpdateManyWithWhereWithoutDocumentInput[]
+    deleteMany?: AudioChunkScalarWhereInput | AudioChunkScalarWhereInput[]
+  }
+
   export type PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput = {
     create?: XOR<PlaybackProgressCreateWithoutDocumentInput, PlaybackProgressUncheckedCreateWithoutDocumentInput> | PlaybackProgressCreateWithoutDocumentInput[] | PlaybackProgressUncheckedCreateWithoutDocumentInput[]
     connectOrCreate?: PlaybackProgressCreateOrConnectWithoutDocumentInput | PlaybackProgressCreateOrConnectWithoutDocumentInput[]
@@ -7490,16 +9259,12 @@ export namespace Prisma {
     connect?: DocumentWhereUniqueInput
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type EnumProcessingModeFieldUpdateOperationsInput = {
     set?: $Enums.ProcessingMode
+  }
+
+  export type EnumChunkStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ChunkStatus
   }
 
   export type DocumentUpdateOneRequiredWithoutChunksNestedInput = {
@@ -7508,6 +9273,20 @@ export namespace Prisma {
     upsert?: DocumentUpsertWithoutChunksInput
     connect?: DocumentWhereUniqueInput
     update?: XOR<XOR<DocumentUpdateToOneWithWhereWithoutChunksInput, DocumentUpdateWithoutChunksInput>, DocumentUncheckedUpdateWithoutChunksInput>
+  }
+
+  export type DocumentCreateNestedOneWithoutAudioChunksInput = {
+    create?: XOR<DocumentCreateWithoutAudioChunksInput, DocumentUncheckedCreateWithoutAudioChunksInput>
+    connectOrCreate?: DocumentCreateOrConnectWithoutAudioChunksInput
+    connect?: DocumentWhereUniqueInput
+  }
+
+  export type DocumentUpdateOneRequiredWithoutAudioChunksNestedInput = {
+    create?: XOR<DocumentCreateWithoutAudioChunksInput, DocumentUncheckedCreateWithoutAudioChunksInput>
+    connectOrCreate?: DocumentCreateOrConnectWithoutAudioChunksInput
+    upsert?: DocumentUpsertWithoutAudioChunksInput
+    connect?: DocumentWhereUniqueInput
+    update?: XOR<XOR<DocumentUpdateToOneWithWhereWithoutAudioChunksInput, DocumentUpdateWithoutAudioChunksInput>, DocumentUncheckedUpdateWithoutAudioChunksInput>
   }
 
   export type UserCreateNestedOneWithoutPlaybackProgressInput = {
@@ -7675,6 +9454,17 @@ export namespace Prisma {
     not?: NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
   }
 
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -7702,17 +9492,6 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
-  export type NestedFloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
   export type NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.DocumentStatus | EnumDocumentStatusFieldRefInput<$PrismaModel>
     in?: $Enums.DocumentStatus[] | ListEnumDocumentStatusFieldRefInput<$PrismaModel>
@@ -7723,25 +9502,20 @@ export namespace Prisma {
     _max?: NestedEnumDocumentStatusFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
     _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedEnumProcessingModeFilter<$PrismaModel = never> = {
-    equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
-    in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
-    not?: NestedEnumProcessingModeFilter<$PrismaModel> | $Enums.ProcessingMode
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -7771,6 +9545,34 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumProcessingModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumProcessingModeFilter<$PrismaModel> | $Enums.ProcessingMode
+  }
+
+  export type NestedEnumChunkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusFilter<$PrismaModel> | $Enums.ChunkStatus
+  }
+
   export type NestedEnumProcessingModeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ProcessingMode | EnumProcessingModeFieldRefInput<$PrismaModel>
     in?: $Enums.ProcessingMode[] | ListEnumProcessingModeFieldRefInput<$PrismaModel>
@@ -7779,6 +9581,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumProcessingModeFilter<$PrismaModel>
     _max?: NestedEnumProcessingModeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumChunkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkStatus | EnumChunkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkStatus[] | ListEnumChunkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkStatusWithAggregatesFilter<$PrismaModel> | $Enums.ChunkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChunkStatusFilter<$PrismaModel>
+    _max?: NestedEnumChunkStatusFilter<$PrismaModel>
   }
 
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -7806,12 +9618,16 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
     errorCode?: string | null
     failedAt?: Date | string | null
     chunks?: TextChunkCreateNestedManyWithoutDocumentInput
+    audioChunks?: AudioChunkCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
   }
 
@@ -7824,12 +9640,16 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
     errorCode?: string | null
     failedAt?: Date | string | null
     chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
+    audioChunks?: AudioChunkUncheckedCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
   }
 
@@ -7899,6 +9719,9 @@ export namespace Prisma {
     pageCount?: IntNullableFilter<"Document"> | number | null
     extractedText?: StringNullableFilter<"Document"> | string | null
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
+    audioDuration?: FloatNullableFilter<"Document"> | number | null
+    totalChunks?: IntFilter<"Document"> | number
+    processedChunks?: IntFilter<"Document"> | number
     createdAt?: DateTimeFilter<"Document"> | Date | string
     updatedAt?: DateTimeFilter<"Document"> | Date | string
     errorMessage?: StringNullableFilter<"Document"> | string | null
@@ -7969,6 +9792,8 @@ export namespace Prisma {
     mode?: $Enums.ProcessingMode
     processed?: string | null
     audioPath?: string | null
+    audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
   }
 
@@ -7980,6 +9805,8 @@ export namespace Prisma {
     mode?: $Enums.ProcessingMode
     processed?: string | null
     audioPath?: string | null
+    audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
   }
 
@@ -7990,6 +9817,34 @@ export namespace Prisma {
 
   export type TextChunkCreateManyDocumentInputEnvelope = {
     data: TextChunkCreateManyDocumentInput | TextChunkCreateManyDocumentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AudioChunkCreateWithoutDocumentInput = {
+    id?: string
+    s3Key: string
+    s3Url: string
+    duration?: number | null
+    createdAt?: Date | string
+    chunkIndex: number
+  }
+
+  export type AudioChunkUncheckedCreateWithoutDocumentInput = {
+    id?: string
+    s3Key: string
+    s3Url: string
+    duration?: number | null
+    createdAt?: Date | string
+    chunkIndex: number
+  }
+
+  export type AudioChunkCreateOrConnectWithoutDocumentInput = {
+    where: AudioChunkWhereUniqueInput
+    create: XOR<AudioChunkCreateWithoutDocumentInput, AudioChunkUncheckedCreateWithoutDocumentInput>
+  }
+
+  export type AudioChunkCreateManyDocumentInputEnvelope = {
+    data: AudioChunkCreateManyDocumentInput | AudioChunkCreateManyDocumentInput[]
     skipDuplicates?: boolean
   }
 
@@ -8079,8 +9934,39 @@ export namespace Prisma {
     mode?: EnumProcessingModeFilter<"TextChunk"> | $Enums.ProcessingMode
     processed?: StringNullableFilter<"TextChunk"> | string | null
     audioPath?: StringNullableFilter<"TextChunk"> | string | null
+    audioDuration?: FloatNullableFilter<"TextChunk"> | number | null
+    status?: EnumChunkStatusFilter<"TextChunk"> | $Enums.ChunkStatus
     createdAt?: DateTimeFilter<"TextChunk"> | Date | string
     documentId?: StringFilter<"TextChunk"> | string
+  }
+
+  export type AudioChunkUpsertWithWhereUniqueWithoutDocumentInput = {
+    where: AudioChunkWhereUniqueInput
+    update: XOR<AudioChunkUpdateWithoutDocumentInput, AudioChunkUncheckedUpdateWithoutDocumentInput>
+    create: XOR<AudioChunkCreateWithoutDocumentInput, AudioChunkUncheckedCreateWithoutDocumentInput>
+  }
+
+  export type AudioChunkUpdateWithWhereUniqueWithoutDocumentInput = {
+    where: AudioChunkWhereUniqueInput
+    data: XOR<AudioChunkUpdateWithoutDocumentInput, AudioChunkUncheckedUpdateWithoutDocumentInput>
+  }
+
+  export type AudioChunkUpdateManyWithWhereWithoutDocumentInput = {
+    where: AudioChunkScalarWhereInput
+    data: XOR<AudioChunkUpdateManyMutationInput, AudioChunkUncheckedUpdateManyWithoutDocumentInput>
+  }
+
+  export type AudioChunkScalarWhereInput = {
+    AND?: AudioChunkScalarWhereInput | AudioChunkScalarWhereInput[]
+    OR?: AudioChunkScalarWhereInput[]
+    NOT?: AudioChunkScalarWhereInput | AudioChunkScalarWhereInput[]
+    id?: StringFilter<"AudioChunk"> | string
+    s3Key?: StringFilter<"AudioChunk"> | string
+    s3Url?: StringFilter<"AudioChunk"> | string
+    duration?: FloatNullableFilter<"AudioChunk"> | number | null
+    createdAt?: DateTimeFilter<"AudioChunk"> | Date | string
+    documentId?: StringFilter<"AudioChunk"> | string
+    chunkIndex?: IntFilter<"AudioChunk"> | number
   }
 
   export type PlaybackProgressUpsertWithWhereUniqueWithoutDocumentInput = {
@@ -8108,12 +9994,16 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
     errorCode?: string | null
     failedAt?: Date | string | null
     user: UserCreateNestedOneWithoutDocumentsInput
+    audioChunks?: AudioChunkCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
   }
 
@@ -8126,12 +10016,16 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
     errorCode?: string | null
     failedAt?: Date | string | null
     userId: string
+    audioChunks?: AudioChunkUncheckedCreateNestedManyWithoutDocumentInput
     playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
   }
 
@@ -8160,12 +10054,16 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     errorCode?: NullableStringFieldUpdateOperationsInput | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
+    audioChunks?: AudioChunkUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
   }
 
@@ -8178,12 +10076,120 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     errorCode?: NullableStringFieldUpdateOperationsInput | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
+    audioChunks?: AudioChunkUncheckedUpdateManyWithoutDocumentNestedInput
+    playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
+  }
+
+  export type DocumentCreateWithoutAudioChunksInput = {
+    id?: string
+    title: string
+    fileName: string
+    fileUrl: string
+    fileSize?: number | null
+    pageCount?: number | null
+    extractedText?: string | null
+    status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
+    user: UserCreateNestedOneWithoutDocumentsInput
+    chunks?: TextChunkCreateNestedManyWithoutDocumentInput
+    playbackProgress?: PlaybackProgressCreateNestedManyWithoutDocumentInput
+  }
+
+  export type DocumentUncheckedCreateWithoutAudioChunksInput = {
+    id?: string
+    title: string
+    fileName: string
+    fileUrl: string
+    fileSize?: number | null
+    pageCount?: number | null
+    extractedText?: string | null
+    status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    errorMessage?: string | null
+    errorCode?: string | null
+    failedAt?: Date | string | null
+    userId: string
+    chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
+    playbackProgress?: PlaybackProgressUncheckedCreateNestedManyWithoutDocumentInput
+  }
+
+  export type DocumentCreateOrConnectWithoutAudioChunksInput = {
+    where: DocumentWhereUniqueInput
+    create: XOR<DocumentCreateWithoutAudioChunksInput, DocumentUncheckedCreateWithoutAudioChunksInput>
+  }
+
+  export type DocumentUpsertWithoutAudioChunksInput = {
+    update: XOR<DocumentUpdateWithoutAudioChunksInput, DocumentUncheckedUpdateWithoutAudioChunksInput>
+    create: XOR<DocumentCreateWithoutAudioChunksInput, DocumentUncheckedCreateWithoutAudioChunksInput>
+    where?: DocumentWhereInput
+  }
+
+  export type DocumentUpdateToOneWithWhereWithoutAudioChunksInput = {
+    where?: DocumentWhereInput
+    data: XOR<DocumentUpdateWithoutAudioChunksInput, DocumentUncheckedUpdateWithoutAudioChunksInput>
+  }
+
+  export type DocumentUpdateWithoutAudioChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileUrl?: StringFieldUpdateOperationsInput | string
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    pageCount?: NullableIntFieldUpdateOperationsInput | number | null
+    extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
+    chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
+    playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
+  }
+
+  export type DocumentUncheckedUpdateWithoutAudioChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileUrl?: StringFieldUpdateOperationsInput | string
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    pageCount?: NullableIntFieldUpdateOperationsInput | number | null
+    extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
   }
 
@@ -8221,6 +10227,9 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -8228,6 +10237,7 @@ export namespace Prisma {
     failedAt?: Date | string | null
     user: UserCreateNestedOneWithoutDocumentsInput
     chunks?: TextChunkCreateNestedManyWithoutDocumentInput
+    audioChunks?: AudioChunkCreateNestedManyWithoutDocumentInput
   }
 
   export type DocumentUncheckedCreateWithoutPlaybackProgressInput = {
@@ -8239,6 +10249,9 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -8246,6 +10259,7 @@ export namespace Prisma {
     failedAt?: Date | string | null
     userId: string
     chunks?: TextChunkUncheckedCreateNestedManyWithoutDocumentInput
+    audioChunks?: AudioChunkUncheckedCreateNestedManyWithoutDocumentInput
   }
 
   export type DocumentCreateOrConnectWithoutPlaybackProgressInput = {
@@ -8304,6 +10318,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -8311,6 +10328,7 @@ export namespace Prisma {
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutDocumentsNestedInput
     chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
+    audioChunks?: AudioChunkUpdateManyWithoutDocumentNestedInput
   }
 
   export type DocumentUncheckedUpdateWithoutPlaybackProgressInput = {
@@ -8322,6 +10340,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -8329,6 +10350,7 @@ export namespace Prisma {
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: StringFieldUpdateOperationsInput | string
     chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
+    audioChunks?: AudioChunkUncheckedUpdateManyWithoutDocumentNestedInput
   }
 
   export type DocumentCreateManyUserInput = {
@@ -8340,6 +10362,9 @@ export namespace Prisma {
     pageCount?: number | null
     extractedText?: string | null
     status?: $Enums.DocumentStatus
+    audioDuration?: number | null
+    totalChunks?: number
+    processedChunks?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     errorMessage?: string | null
@@ -8365,12 +10390,16 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     errorCode?: NullableStringFieldUpdateOperationsInput | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     chunks?: TextChunkUpdateManyWithoutDocumentNestedInput
+    audioChunks?: AudioChunkUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUpdateManyWithoutDocumentNestedInput
   }
 
@@ -8383,12 +10412,16 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     errorCode?: NullableStringFieldUpdateOperationsInput | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     chunks?: TextChunkUncheckedUpdateManyWithoutDocumentNestedInput
+    audioChunks?: AudioChunkUncheckedUpdateManyWithoutDocumentNestedInput
     playbackProgress?: PlaybackProgressUncheckedUpdateManyWithoutDocumentNestedInput
   }
 
@@ -8401,6 +10434,9 @@ export namespace Prisma {
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    totalChunks?: IntFieldUpdateOperationsInput | number
+    processedChunks?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
@@ -8443,7 +10479,18 @@ export namespace Prisma {
     mode?: $Enums.ProcessingMode
     processed?: string | null
     audioPath?: string | null
+    audioDuration?: number | null
+    status?: $Enums.ChunkStatus
     createdAt?: Date | string
+  }
+
+  export type AudioChunkCreateManyDocumentInput = {
+    id?: string
+    s3Key: string
+    s3Url: string
+    duration?: number | null
+    createdAt?: Date | string
+    chunkIndex: number
   }
 
   export type PlaybackProgressCreateManyDocumentInput = {
@@ -8463,6 +10510,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -8474,6 +10523,8 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -8485,7 +10536,36 @@ export namespace Prisma {
     mode?: EnumProcessingModeFieldUpdateOperationsInput | $Enums.ProcessingMode
     processed?: NullableStringFieldUpdateOperationsInput | string | null
     audioPath?: NullableStringFieldUpdateOperationsInput | string | null
+    audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumChunkStatusFieldUpdateOperationsInput | $Enums.ChunkStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AudioChunkUpdateWithoutDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AudioChunkUncheckedUpdateWithoutDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AudioChunkUncheckedUpdateManyWithoutDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    s3Key?: StringFieldUpdateOperationsInput | string
+    s3Url?: StringFieldUpdateOperationsInput | string
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunkIndex?: IntFieldUpdateOperationsInput | number
   }
 
   export type PlaybackProgressUpdateWithoutDocumentInput = {

@@ -24,8 +24,18 @@ enum DocumentStatus {
   UPLOADED // File stored, not yet processed
   EXTRACTING // PDF text extraction in progress
   CHUNKING // Splitting into TTS chunks
-  READY // Fully processed, playable
+  REWRITING // AI rewriting in progress (before audio generation)
+  GENERATING // TTS generating audio, nothing playable yet
+  PARTIALLY_READY // Some audio chunks are ready — playable, still generating
+  READY // All audio chunks generated, fully playable
   ERROR // Something went wrong
+}
+
+enum ChunkStatus {
+  PENDING // Created, waiting for audio generation
+  GENERATING_AUDIO // TTS is running for this chunk
+  DONE // Audio generated and uploaded to S3
+  ERROR // Audio generation failed
 }
 
 // ─────────────────────────────────────────────
@@ -47,16 +57,19 @@ model User {
 }
 
 model Document {
-  id            String         @id @default(cuid())
-  title         String
-  fileName      String // original filename
-  fileUrl       String // path on disk or object storage URL
-  fileSize      Int? // bytes
-  pageCount     Int?
-  extractedText String?        @db.Text
-  status        DocumentStatus @default(UPLOADED)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id              String         @id @default(cuid())
+  title           String
+  fileName        String // original filename
+  fileUrl         String // path on disk or object storage URL
+  fileSize        Int? // bytes
+  pageCount       Int?
+  extractedText   String?        @db.Text
+  status          DocumentStatus @default(UPLOADED)
+  audioDuration   Float? // Total audio duration in seconds (for FULL_TEXT mode)
+  totalChunks     Int            @default(0) // Total FULL_TEXT chunks expected
+  processedChunks Int            @default(0) // Chunks with status = DONE
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   // Error tracking (populated when status = ERROR)
   errorMessage String? // Human-readable error description
@@ -67,6 +80,7 @@ model Document {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   chunks           TextChunk[]
+  audioChunks      AudioChunk[]
   playbackProgress PlaybackProgress[]
 
   // Performance indexes
@@ -82,20 +96,40 @@ model Document {
 //   2. Cache audio per chunk + mode (avoid re-running Piper)
 //   3. Know which chunks have been AI-processed
 model TextChunk {
-  id         String         @id @default(cuid())
-  index      Int // 0-based order within document
-  text       String         @db.Text // original extracted text for this chunk
-  tokenCount Int?
-  mode       ProcessingMode @default(FULL_TEXT)
-  processed  String?        @db.Text // AI-rewritten text (null = not yet processed)
-  audioPath  String? // path to cached .wav file on disk
-  createdAt  DateTime       @default(now())
+  id            String         @id @default(cuid())
+  index         Int // 0-based order within document
+  text          String         @db.Text // original extracted text for this chunk
+  tokenCount    Int?
+  mode          ProcessingMode @default(FULL_TEXT)
+  processed     String?        @db.Text // AI-rewritten text (null = not yet processed)
+  audioPath     String? // path to cached .wav file on disk
+  audioDuration Float? // Duration of this chunk's audio in seconds (unused — see AudioChunk.duration)
+  status        ChunkStatus    @default(PENDING) // Lifecycle state for audio generation
+  createdAt     DateTime       @default(now())
 
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, index, mode]) // one cached audio per (doc, chunk, mode)
   @@map("text_chunks")
+}
+
+// Each AudioChunk represents a generated audio file stored in S3.
+// Used to avoid re-generating TTS audio for the same chunk.
+model AudioChunk {
+  id        String   @id @default(cuid())
+  s3Key     String // S3 object key, e.g. "audio/{docId}/chunk-{index}.wav"
+  s3Url     String // Full public URL for direct playback
+  duration  Float? // Audio duration in seconds (parsed from WAV header)
+  createdAt DateTime @default(now())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int // Matches TextChunk.index (0-based)
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId, chunkIndex])
+  @@map("audio_chunks")
 }
 
 // Stores where the user stopped listening.

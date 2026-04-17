@@ -10,6 +10,7 @@
 
 import type { PrismaClient } from "../../generated/prisma";
 import type { Document } from "../../generated/prisma";
+import { DocumentStatus } from "../../generated/prisma";
 import { clearDocumentAudioCache } from "../tts/piper";
 import { deleteFileFromDisk } from "./uploadService";
 
@@ -34,6 +35,8 @@ export async function getUserDocuments(
       fileSize: true,
       pageCount: true,
       status: true,
+      totalChunks: true,
+      processedChunks: true,
       createdAt: true,
       errorMessage: true,
       errorCode: true,
@@ -63,6 +66,9 @@ export async function getDocumentById(
       fileSize: true,
       pageCount: true,
       status: true,
+      audioDuration: true,
+      totalChunks: true,
+      processedChunks: true,
       createdAt: true,
       errorMessage: true,
       errorCode: true,
@@ -194,6 +200,20 @@ export async function deleteDocumentWithCleanup(
     `[documentService] Cleared ${deletedAudioFiles} audio cache files for document ${documentId}`
   );
 
+  // Delete audio from S3
+  try {
+    const { deleteDocumentAudio } = await import("./audioService");
+    const s3Deleted = await deleteDocumentAudio(documentId);
+    console.log(
+      `[documentService] Deleted ${s3Deleted} S3 audio files for document ${documentId}`
+    );
+  } catch (s3Error) {
+    console.error(
+      `[documentService] S3 cleanup failed (non-critical):`,
+      s3Error
+    );
+  }
+
   // Delete PDF file from disk
   await deleteFileFromDisk(document.fileUrl);
   console.log(`[documentService] Deleted PDF file: ${document.fileUrl}`);
@@ -211,5 +231,43 @@ export async function deleteDocumentWithCleanup(
     audioFilesDeleted: deletedAudioFiles,
     pdfPath: document.fileUrl,
   };
+}
+
+/**
+ * Recalculate and persist document progress based on FULL_TEXT TextChunk states.
+ *
+ * Status transitions (audio-pipeline only; REWRITING is owned by process.ts):
+ *   errored === total && total > 0      → ERROR
+ *   done === total && total > 0         → READY
+ *   done > 0                            → PARTIALLY_READY (playable, still generating)
+ *   done === 0                          → GENERATING (TTS running, nothing playable yet)
+ *
+ * Called by audioService after each chunk finishes generating.
+ */
+export async function updateDocumentProgress(
+  documentId: string,
+  prisma: PrismaClient
+): Promise<void> {
+  const [total, done, errored] = await Promise.all([
+    prisma.textChunk.count({ where: { documentId, mode: "FULL_TEXT" } }),
+    prisma.textChunk.count({ where: { documentId, mode: "FULL_TEXT", status: "DONE" } }),
+    prisma.textChunk.count({ where: { documentId, mode: "FULL_TEXT", status: "ERROR" } }),
+  ]);
+
+  let status: DocumentStatus;
+  if (total > 0 && errored > 0) {
+    status = DocumentStatus.ERROR;
+  } else if (total > 0 && done === total) {
+    status = DocumentStatus.READY;
+  } else if (done > 0) {
+    status = DocumentStatus.PARTIALLY_READY;
+  } else {
+    status = DocumentStatus.GENERATING;
+  }
+
+  await prisma.document.update({
+    where: { id: documentId },
+    data: { processedChunks: done, status },
+  });
 }
 
