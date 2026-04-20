@@ -5049,6 +5049,7 @@ export namespace Prisma {
     s3Key: string | null
     s3Url: string | null
     duration: number | null
+    textHash: string | null
     createdAt: Date | null
     documentId: string | null
     chunkIndex: number | null
@@ -5059,6 +5060,7 @@ export namespace Prisma {
     s3Key: string | null
     s3Url: string | null
     duration: number | null
+    textHash: string | null
     createdAt: Date | null
     documentId: string | null
     chunkIndex: number | null
@@ -5069,6 +5071,7 @@ export namespace Prisma {
     s3Key: number
     s3Url: number
     duration: number
+    textHash: number
     createdAt: number
     documentId: number
     chunkIndex: number
@@ -5091,6 +5094,7 @@ export namespace Prisma {
     s3Key?: true
     s3Url?: true
     duration?: true
+    textHash?: true
     createdAt?: true
     documentId?: true
     chunkIndex?: true
@@ -5101,6 +5105,7 @@ export namespace Prisma {
     s3Key?: true
     s3Url?: true
     duration?: true
+    textHash?: true
     createdAt?: true
     documentId?: true
     chunkIndex?: true
@@ -5111,6 +5116,7 @@ export namespace Prisma {
     s3Key?: true
     s3Url?: true
     duration?: true
+    textHash?: true
     createdAt?: true
     documentId?: true
     chunkIndex?: true
@@ -5208,6 +5214,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration: number | null
+    textHash: string | null
     createdAt: Date
     documentId: string
     chunkIndex: number
@@ -5237,6 +5244,7 @@ export namespace Prisma {
     s3Key?: boolean
     s3Url?: boolean
     duration?: boolean
+    textHash?: boolean
     createdAt?: boolean
     documentId?: boolean
     chunkIndex?: boolean
@@ -5248,6 +5256,7 @@ export namespace Prisma {
     s3Key?: boolean
     s3Url?: boolean
     duration?: boolean
+    textHash?: boolean
     createdAt?: boolean
     documentId?: boolean
     chunkIndex?: boolean
@@ -5259,6 +5268,7 @@ export namespace Prisma {
     s3Key?: boolean
     s3Url?: boolean
     duration?: boolean
+    textHash?: boolean
     createdAt?: boolean
     documentId?: boolean
     chunkIndex?: boolean
@@ -5270,12 +5280,13 @@ export namespace Prisma {
     s3Key?: boolean
     s3Url?: boolean
     duration?: boolean
+    textHash?: boolean
     createdAt?: boolean
     documentId?: boolean
     chunkIndex?: boolean
   }
 
-  export type AudioChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "s3Key" | "s3Url" | "duration" | "createdAt" | "documentId" | "chunkIndex", ExtArgs["result"]["audioChunk"]>
+  export type AudioChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "s3Key" | "s3Url" | "duration" | "textHash" | "createdAt" | "documentId" | "chunkIndex", ExtArgs["result"]["audioChunk"]>
   export type AudioChunkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     document?: boolean | DocumentDefaultArgs<ExtArgs>
   }
@@ -5296,6 +5307,7 @@ export namespace Prisma {
       s3Key: string
       s3Url: string
       duration: number | null
+      textHash: string | null
       createdAt: Date
       documentId: string
       chunkIndex: number
@@ -5727,6 +5739,7 @@ export namespace Prisma {
     readonly s3Key: FieldRef<"AudioChunk", 'String'>
     readonly s3Url: FieldRef<"AudioChunk", 'String'>
     readonly duration: FieldRef<"AudioChunk", 'Float'>
+    readonly textHash: FieldRef<"AudioChunk", 'String'>
     readonly createdAt: FieldRef<"AudioChunk", 'DateTime'>
     readonly documentId: FieldRef<"AudioChunk", 'String'>
     readonly chunkIndex: FieldRef<"AudioChunk", 'Int'>
@@ -7355,6 +7368,7 @@ export namespace Prisma {
     s3Key: 's3Key',
     s3Url: 's3Url',
     duration: 'duration',
+    textHash: 'textHash',
     createdAt: 'createdAt',
     documentId: 'documentId',
     chunkIndex: 'chunkIndex'
@@ -7798,6 +7812,7 @@ export namespace Prisma {
     s3Key?: StringFilter<"AudioChunk"> | string
     s3Url?: StringFilter<"AudioChunk"> | string
     duration?: FloatNullableFilter<"AudioChunk"> | number | null
+    textHash?: StringNullableFilter<"AudioChunk"> | string | null
     createdAt?: DateTimeFilter<"AudioChunk"> | Date | string
     documentId?: StringFilter<"AudioChunk"> | string
     chunkIndex?: IntFilter<"AudioChunk"> | number
@@ -7809,6 +7824,7 @@ export namespace Prisma {
     s3Key?: SortOrder
     s3Url?: SortOrder
     duration?: SortOrderInput | SortOrder
+    textHash?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     chunkIndex?: SortOrder
@@ -7824,6 +7840,7 @@ export namespace Prisma {
     s3Key?: StringFilter<"AudioChunk"> | string
     s3Url?: StringFilter<"AudioChunk"> | string
     duration?: FloatNullableFilter<"AudioChunk"> | number | null
+    textHash?: StringNullableFilter<"AudioChunk"> | string | null
     createdAt?: DateTimeFilter<"AudioChunk"> | Date | string
     documentId?: StringFilter<"AudioChunk"> | string
     chunkIndex?: IntFilter<"AudioChunk"> | number
@@ -7835,6 +7852,7 @@ export namespace Prisma {
     s3Key?: SortOrder
     s3Url?: SortOrder
     duration?: SortOrderInput | SortOrder
+    textHash?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     chunkIndex?: SortOrder
@@ -7853,6 +7871,7 @@ export namespace Prisma {
     s3Key?: StringWithAggregatesFilter<"AudioChunk"> | string
     s3Url?: StringWithAggregatesFilter<"AudioChunk"> | string
     duration?: FloatNullableWithAggregatesFilter<"AudioChunk"> | number | null
+    textHash?: StringNullableWithAggregatesFilter<"AudioChunk"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"AudioChunk"> | Date | string
     documentId?: StringWithAggregatesFilter<"AudioChunk"> | string
     chunkIndex?: IntWithAggregatesFilter<"AudioChunk"> | number
@@ -8253,6 +8272,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration?: number | null
+    textHash?: string | null
     createdAt?: Date | string
     chunkIndex: number
     document: DocumentCreateNestedOneWithoutAudioChunksInput
@@ -8263,6 +8283,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration?: number | null
+    textHash?: string | null
     createdAt?: Date | string
     documentId: string
     chunkIndex: number
@@ -8273,6 +8294,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
     document?: DocumentUpdateOneRequiredWithoutAudioChunksNestedInput
@@ -8283,6 +8305,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     documentId?: StringFieldUpdateOperationsInput | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
@@ -8293,6 +8316,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration?: number | null
+    textHash?: string | null
     createdAt?: Date | string
     documentId: string
     chunkIndex: number
@@ -8303,6 +8327,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
   }
@@ -8312,6 +8337,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     documentId?: StringFieldUpdateOperationsInput | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
@@ -8874,6 +8900,7 @@ export namespace Prisma {
     s3Key?: SortOrder
     s3Url?: SortOrder
     duration?: SortOrder
+    textHash?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     chunkIndex?: SortOrder
@@ -8889,6 +8916,7 @@ export namespace Prisma {
     s3Key?: SortOrder
     s3Url?: SortOrder
     duration?: SortOrder
+    textHash?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     chunkIndex?: SortOrder
@@ -8899,6 +8927,7 @@ export namespace Prisma {
     s3Key?: SortOrder
     s3Url?: SortOrder
     duration?: SortOrder
+    textHash?: SortOrder
     createdAt?: SortOrder
     documentId?: SortOrder
     chunkIndex?: SortOrder
@@ -9825,6 +9854,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration?: number | null
+    textHash?: string | null
     createdAt?: Date | string
     chunkIndex: number
   }
@@ -9834,6 +9864,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration?: number | null
+    textHash?: string | null
     createdAt?: Date | string
     chunkIndex: number
   }
@@ -9964,6 +9995,7 @@ export namespace Prisma {
     s3Key?: StringFilter<"AudioChunk"> | string
     s3Url?: StringFilter<"AudioChunk"> | string
     duration?: FloatNullableFilter<"AudioChunk"> | number | null
+    textHash?: StringNullableFilter<"AudioChunk"> | string | null
     createdAt?: DateTimeFilter<"AudioChunk"> | Date | string
     documentId?: StringFilter<"AudioChunk"> | string
     chunkIndex?: IntFilter<"AudioChunk"> | number
@@ -10489,6 +10521,7 @@ export namespace Prisma {
     s3Key: string
     s3Url: string
     duration?: number | null
+    textHash?: string | null
     createdAt?: Date | string
     chunkIndex: number
   }
@@ -10546,6 +10579,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
   }
@@ -10555,6 +10589,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
   }
@@ -10564,6 +10599,7 @@ export namespace Prisma {
     s3Key?: StringFieldUpdateOperationsInput | string
     s3Url?: StringFieldUpdateOperationsInput | string
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    textHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chunkIndex?: IntFieldUpdateOperationsInput | number
   }
