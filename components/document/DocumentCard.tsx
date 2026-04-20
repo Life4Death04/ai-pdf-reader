@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Trash2, FileText } from "lucide-react";
+import { Play, Trash2, FileText, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -78,12 +78,31 @@ export function DocumentCard({
   onDelete,
 }: DocumentCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRewriting, setIsRewriting] = useState(false);
   const isReady = status === "READY" || status === "PARTIALLY_READY";
   const chunkProgress =
     totalChunks && totalChunks > 0
       ? Math.round((processedChunks ?? 0) / totalChunks * 100)
       : 0;
   const processingLabel = getProcessingLabel(status, totalChunks, processedChunks);
+
+  const handleRewrite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isRewriting) return;
+
+    setIsRewriting(true);
+
+    try {
+      const response = await fetch(`/api/documents/${id}/rewrite`, { method: "POST" });
+      if (!response.ok) {
+        setIsRewriting(false);
+      }
+    } catch (error) {
+      console.error(`[DocumentCard] Rewrite failed:`, error);
+      setIsRewriting(false);
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -156,6 +175,28 @@ export function DocumentCard({
                   <Play className="w-5 h-5 text-[#001a10] fill-current ml-0.5" />
                 </motion.div>
               </div>
+            )}
+
+            {/* Rewrite with AI button */}
+            {isReady && (
+              <button
+                onClick={handleRewrite}
+                className={`absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100
+                  flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
+                  bg-black/40 backdrop-blur-sm hover:bg-primary/20
+                  text-white/60 hover:text-primary transition-all duration-200
+                  ${isRewriting ? "cursor-not-allowed opacity-50" : ""}`}
+                title="Rewrite with AI"
+              >
+                {isRewriting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span className="text-[11px] font-medium">
+                  {isRewriting ? "Rewriting…" : "Rewrite with AI"}
+                </span>
+              </button>
             )}
 
             {/* Delete button */}
@@ -247,12 +288,15 @@ export function DocumentCard({
 
                   return (
                     <>
-                      {playability && <StatusBadge status={playability} compact />}
-                      {activity && (
+                      {playability && (
                         <StatusBadge
-                          status={activity}
+                          status={playability}
                           compact
-                          label={processingLabel ?? undefined}
+                          label={
+                            playability === "PARTIALLY_READY" && totalChunks
+                              ? `Partially Ready · ${processedChunks ?? 0}/${totalChunks}`
+                              : undefined
+                          }
                         />
                       )}
                     </>

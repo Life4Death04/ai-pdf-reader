@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload as UploadIcon, FileUp, Check } from "lucide-react";
+import { Upload as UploadIcon, FileUp, Check, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface UploadZoneProps {
@@ -14,6 +14,7 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
   const [state, setState] = useState<UploadState>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileName, setFileName] = useState("");
+  const [aiRewrite, setAiRewrite] = useState(false);
 
   const uploadFile = async (file: File) => {
     setState("uploading");
@@ -27,6 +28,7 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("enableAiRewrite", String(aiRewrite));
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -79,6 +81,8 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
     const file = e.target.files?.[0];
     if (file && file.type === "application/pdf") await uploadFile(file);
   };
+
+  const isActive = state === "idle" || state === "dragging";
 
   return (
     <motion.div
@@ -151,7 +155,7 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
                 </div>
               </motion.div>
             ) : (
-              <motion.div
+        <motion.div
                 key="idle"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -202,6 +206,50 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
           disabled={state !== "idle"}
         />
       </label>
+
+      {/* AI Rewrite toggle — outside label to avoid triggering file input */}
+      <AnimatePresence>
+        {isActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.2 }}
+            className="px-8 pb-6 flex items-center justify-between"
+            onClick={(e) => e.preventDefault()}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className={`w-3.5 h-3.5 transition-colors ${aiRewrite ? "text-primary" : "text-on-surface-variant"}`} />
+              <span className={`text-xs font-medium transition-colors ${aiRewrite ? "text-on-surface" : "text-on-surface-variant"}`}>
+                Auto-Rewrite with AI
+              </span>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={aiRewrite}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setAiRewrite((v) => !v);
+              }}
+              className={`
+                relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0
+                ${aiRewrite ? "primary-gradient" : "bg-surface-container-highest"}
+              `}
+            >
+              <span
+                className={`
+                  absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm
+                  transition-transform duration-200
+                  ${aiRewrite ? "translate-x-4" : "translate-x-0.5"}
+                `}
+              />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Upload progress bar at bottom */}
       {state === "uploading" && (
