@@ -4,6 +4,8 @@ import { extractTextFromPDF } from "@/lib/pdf/extract";
 import { chunkTextWithFiltering } from "@/lib/chunker/chunk";
 import { rewriteChunk, checkOllamaHealth, warmupModel } from "@/lib/ai/rewrite";
 import { DocumentStatus } from "../../generated/prisma";
+import { updateDocumentProgress } from "@/lib/services/documentService";
+import { generateAndStoreChunkAudio } from "@/lib/services/audioService";
 import { asyncPoolWithProgress } from "@/lib/utils/asyncPool";
 import { createErrorDetails } from "@/lib/utils/errorClassifier";
 
@@ -140,7 +142,15 @@ export async function rewriteDocumentChunks(
     concurrency?: number;
   } = {}
 ): Promise<void> {
-  const { mode = "audiobook", concurrency = 3 } = options;
+  // concurrency=1: process chunks one at a time so each gets the full OLLAMA_TIMEOUT
+  // for actual inference, not queue wait time. Ollama (and most local LLM servers)
+  // are single-threaded — concurrency>1 brings no throughput gain and causes
+  // the 2nd+ simultaneous requests to time out before Ollama even starts them.
+  //
+  // If you upgrade to a parallel-capable backend (vLLM, llama.cpp --parallel,
+  // or a hosted API), bump this via the AI_CONCURRENCY env var to match
+  // the server's actual parallel capacity (e.g. AI_CONCURRENCY=4 for 4 workers).
+  const { mode = "audiobook", concurrency = 1 } = options;
 
   try {
     console.log("\n" + "=".repeat(70));
@@ -195,29 +205,37 @@ export async function rewriteDocumentChunks(
       concurrency,
       chunks,
       async (chunk, index) => {
-        // Skip already rewritten chunks
+        let textForAudio = chunk.processed ?? chunk.text;
+
+        // Rewrite step — skip if already done
         if (chunk.processed) {
-          console.log(`[rewrite] Chunk ${index + 1}/${total} already rewritten, skipping`);
-          return;
+          console.log(`[rewrite] Chunk ${index + 1}/${total} already rewritten, proceeding to audio`);
+        } else {
+          try {
+            const rewritten = await rewriteChunk(chunk.text, { mode, skipShort: true });
+            await prisma.textChunk.update({
+              where: { id: chunk.id },
+              data: { processed: rewritten },
+            });
+            textForAudio = rewritten;
+            console.log(`[rewrite] ✅ Chunk ${index + 1}/${total} rewritten`);
+          } catch (rewriteError) {
+            console.error(`[rewrite] ❌ Rewrite failed for chunk ${index + 1}/${total}, using original:`, rewriteError);
+            // textForAudio stays as chunk.text — audio still gets generated
+          }
         }
 
+        // Audio step — runs immediately after rewrite, independent of other chunks
         try {
-          // Rewrite the chunk
-          const rewritten = await rewriteChunk(chunk.text, {
-            mode,
-            skipShort: true,
+          await generateAndStoreChunkAudio({
+            documentId,
+            chunkIndex: chunk.index,
+            text: textForAudio,
           });
-
-          // Save rewritten version to database
-          await prisma.textChunk.update({
-            where: { id: chunk.id },
-            data: { processed: rewritten },
-          });
-
-          console.log(`[rewrite] ✅ Chunk ${index + 1}/${total} rewritten and saved`);
-        } catch (error) {
-          console.error(`[rewrite] ❌ Failed to rewrite chunk ${index + 1}/${total}:`, error);
-          // Continue with other chunks - don't fail the whole batch
+          console.log(`[rewrite] ✅ Chunk ${index + 1}/${total} audio generated and uploaded`);
+        } catch (audioError) {
+          console.error(`[rewrite] ❌ Audio generation failed for chunk ${index + 1}/${total}:`, audioError);
+          // generateAndStoreChunkAudio already marks the TextChunk as ERROR
         }
       },
       (completed, total) => {
@@ -235,11 +253,10 @@ export async function rewriteDocumentChunks(
     // ── Step 5: Complete ──────────────────────────────────────────────────
     const duration = ((Date.now() - startTime) / 1000 / 60).toFixed(2);
 
-    // Restore status to READY now that rewriting is done.
-    await prisma.document.update({
-      where: { id: documentId },
-      data: { status: DocumentStatus.READY },
-    });
+    // Derive status from actual chunk states rather than hardcoding READY.
+    // If called before audio generation, TextChunks are PENDING → GENERATING.
+    // If called after audio generation, TextChunks are DONE → READY.
+    await updateDocumentProgress(documentId, prisma);
 
     console.log("\n" + "=".repeat(70));
     console.log(`🎉 REWRITE COMPLETE FOR DOCUMENT ${documentId}`);
