@@ -46,6 +46,12 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
   // Cumulative durations: cumulativeDurations[i] = total seconds before chunk i starts
   const cumulativeDurations = useRef<number[]>([]);
 
+  // Playback progress persistence
+  const pendingRestoreRef = useRef<number | null>(null); // time to seek to once chunks load
+  const currentTimeRef = useRef(0);                      // mirrors currentTime state for callbacks
+  const currentChunkRef = useRef(0);                     // mirrors currentChunkIndex for callbacks
+  const isSeekingRef = useRef(false);                    // guards against timeupdate during chunk transitions
+
   const computedTotalDuration = totalDuration ?? chunks.reduce(
     (sum, c) => sum + (c.duration ?? 0),
     0
@@ -161,23 +167,34 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
     if (currentChunkIndex < chunks.length - 1) {
       setCurrentChunkIndex((prev) => prev + 1);
     } else {
+      // Document finished — clear saved position so next listen starts from the beginning
+      localStorage.removeItem(`playback_${documentId}`);
+      fetch(`/api/documents/${documentId}/progress`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time: 0, chunkIndex: 0, mode: "FULL_TEXT" }),
+        keepalive: true,
+      }).catch(() => {});
       setIsPlaying(false);
       onPlayStateChange?.(false);
     }
-  }, [currentChunkIndex, chunks.length, useFallback, onPlayStateChange]);
+  }, [currentChunkIndex, chunks.length, useFallback, onPlayStateChange, documentId]);
 
   // Track time updates for the global progress
   const handleTimeUpdate = useCallback(() => {
+    if (isSeekingRef.current) return;
     const audio = audioRef.current;
     if (!audio) return;
 
+    let newTime: number;
     if (useFallback) {
-      setCurrentTime(audio.currentTime);
-      return;
+      newTime = audio.currentTime;
+    } else {
+      const chunkOffset = cumulativeDurations.current[currentChunkIndex] ?? 0;
+      newTime = chunkOffset + audio.currentTime;
     }
-
-    const chunkOffset = cumulativeDurations.current[currentChunkIndex] ?? 0;
-    setCurrentTime(chunkOffset + audio.currentTime);
+    currentTimeRef.current = newTime;
+    setCurrentTime(newTime);
   }, [currentChunkIndex, useFallback]);
 
   // Wire up audio events
@@ -187,19 +204,32 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
 
     const handleLoadStart = () => setIsLoading(true);
     const handleCanPlay = () => setIsLoading(false);
+    const handlePause = () => {
+      const t = currentTimeRef.current;
+      const c = currentChunkRef.current;
+      localStorage.setItem(`playback_${documentId}`, JSON.stringify({ time: t, chunkIndex: c }));
+      fetch(`/api/documents/${documentId}/progress`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time: t, chunkIndex: c, mode: "FULL_TEXT" }),
+        keepalive: true,
+      }).catch(() => {});
+    };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("loadstart", handleLoadStart);
     audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("pause", handlePause);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("loadstart", handleLoadStart);
       audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("pause", handlePause);
     };
-  }, [handleTimeUpdate, handleEnded]);
+  }, [handleTimeUpdate, handleEnded, documentId]);
 
   // Sync volume and mute state to audio element
   useEffect(() => {
@@ -219,6 +249,86 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
   useEffect(() => {
     onChunkChange?.(currentChunkIndex);
   }, [currentChunkIndex, onChunkChange]);
+
+  // Keep chunk ref in sync (used by save callbacks)
+  useEffect(() => {
+    currentChunkRef.current = currentChunkIndex;
+  }, [currentChunkIndex]);
+
+  // Fetch saved progress on mount: DB first, localStorage fallback
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchSavedProgress() {
+      let savedTime: number | null = null;
+
+      try {
+        const res = await fetch(`/api/documents/${documentId}/progress`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data?.time > 0) savedTime = json.data.time;
+        }
+      } catch {
+        // fall through to localStorage
+      }
+
+      if (savedTime === null) {
+        try {
+          const stored = localStorage.getItem(`playback_${documentId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.time > 0) savedTime = parsed.time;
+          }
+        } catch {
+          // ignore malformed localStorage entry
+        }
+      }
+
+      if (!cancelled && savedTime !== null) {
+        pendingRestoreRef.current = savedTime;
+      }
+    }
+
+    fetchSavedProgress();
+    return () => { cancelled = true; };
+  }, [documentId]);
+
+  // Restore position once chunks are available (no-op after first restore)
+  useEffect(() => {
+    if (chunks.length === 0 || pendingRestoreRef.current === null) return;
+    seekTo(pendingRestoreRef.current);
+    pendingRestoreRef.current = null;
+  // seekTo reads chunks from closure — must re-run when chunks change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chunks]);
+
+  // Save to localStorage on chunk advance (only while actually playing, not during restore)
+  useEffect(() => {
+    if (!isPlaying || currentChunkIndex === 0) return;
+    localStorage.setItem(
+      `playback_${documentId}`,
+      JSON.stringify({ time: currentTimeRef.current, chunkIndex: currentChunkIndex })
+    );
+  }, [currentChunkIndex, isPlaying, documentId]);
+
+  // Save on page close (keepalive ensures the fetch completes even as the page unloads)
+  useEffect(() => {
+    const handleUnload = () => {
+      const t = currentTimeRef.current;
+      const c = currentChunkRef.current;
+      if (t <= 0) return;
+      localStorage.setItem(`playback_${documentId}`, JSON.stringify({ time: t, chunkIndex: c }));
+      fetch(`/api/documents/${documentId}/progress`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time: t, chunkIndex: c, mode: "FULL_TEXT" }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [documentId]);
 
   const seekTo = (targetTime: number) => {
     handleSeek({
@@ -269,12 +379,14 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
     const offsetWithinChunk = targetTime - cumDurations[targetChunk];
 
     if (targetChunk !== currentChunkIndex) {
+      isSeekingRef.current = true;
       setCurrentChunkIndex(targetChunk);
       // Wait for audio to load then seek
       const audio = audioRef.current;
       if (audio) {
         const seekOnLoad = () => {
           audio.currentTime = offsetWithinChunk;
+          isSeekingRef.current = false;
           audio.removeEventListener("canplay", seekOnLoad);
         };
         audio.addEventListener("canplay", seekOnLoad);
