@@ -288,12 +288,15 @@ export function DocumentCard({
 
                   return (
                     <>
-                      {playability && <StatusBadge status={playability} compact />}
-                      {activity && (
+                      {playability && (
                         <StatusBadge
-                          status={activity}
+                          status={playability}
                           compact
-                          label={processingLabel ?? undefined}
+                          label={
+                            playability === "PARTIALLY_READY" && totalChunks
+                              ? `Partially Ready · ${processedChunks ?? 0}/${totalChunks}`
+                              : undefined
+                          }
                         />
                       )}
                     </>
