@@ -23,7 +23,15 @@ export interface ProcessingConfig {
 export function getProcessingConfig(): ProcessingConfig {
   return {
     enableAiRewrite: process.env.ENABLE_AI_REWRITE === "true",
-    aiConcurrency: parseInt(process.env.AI_CONCURRENCY ?? "3", 10),
+    // Default is 1 because Ollama (phi3) is single-threaded: sending multiple
+    // requests simultaneously doesn't increase throughput — it only causes
+    // later requests to timeout while waiting in Ollama's queue.
+    //
+    // Raise AI_CONCURRENCY only if you switch to a model server that supports
+    // true parallel inference (e.g. vLLM, llama.cpp with --parallel N,
+    // or a hosted API like Claude/GPT-4 that handles concurrent requests natively).
+    // A safe starting point for those setups is AI_CONCURRENCY=3; tune up from there.
+    aiConcurrency: parseInt(process.env.AI_CONCURRENCY ?? "1", 10),
     rewriteMode: (process.env.AI_REWRITE_MODE ?? "audiobook") as ProcessingConfig["rewriteMode"],
   };
 }
@@ -49,26 +57,26 @@ export async function runBackgroundProcessing(
     await processDocument(documentId);
     console.log(`[processing] Document ${documentId} is READY`);
 
-    // Phase 1.5: Pre-generate audio and upload to S3
-    console.log(`[processing] Starting audio generation for ${documentId}`);
-    const { generateAllChunkAudio } = await import("./audioService");
-    await generateAllChunkAudio(documentId);
-    console.log(`[processing] Audio generation completed for ${documentId}`);
-
-    // Phase 2: Slow path - optionally rewrite chunks
     if (config.enableAiRewrite) {
+      // AI rewrite path: each chunk is rewritten then immediately gets TTS + S3
+      // upload without waiting for the rest. generateAllChunkAudio is NOT called
+      // separately — audio generation is embedded inside rewriteDocumentChunks.
       console.log(
-        `[processing] Starting AI rewrite in background for ${documentId} (mode: ${config.rewriteMode}, concurrency: ${config.aiConcurrency})`
+        `[processing] Starting AI rewrite + audio pipeline for ${documentId} (mode: ${config.rewriteMode}, concurrency: ${config.aiConcurrency})`
       );
-      
+
       await rewriteDocumentChunks(documentId, {
         mode: config.rewriteMode,
         concurrency: config.aiConcurrency,
       });
-      
-      console.log(`[processing] AI rewrite completed for ${documentId}`);
+
+      console.log(`[processing] AI rewrite + audio pipeline completed for ${documentId}`);
     } else {
-      console.log(`[processing] AI rewrite disabled. Skipping for ${documentId}`);
+      // No rewrite: generate audio from original text in batch
+      console.log(`[processing] Starting audio generation for ${documentId}`);
+      const { generateAllChunkAudio } = await import("./audioService");
+      await generateAllChunkAudio(documentId);
+      console.log(`[processing] Audio generation completed for ${documentId}`);
     }
   } catch (error) {
     console.error(
