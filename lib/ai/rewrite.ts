@@ -40,14 +40,14 @@ let modelWarmedUp = false;
  */
 function buildRewritePrompt(chunk: string, mode: "audiobook" | "formal" = "audiobook"): string {
   if (mode === "audiobook") {
-    return `Rewrite this text for an audiobook. Make it conversational and natural like explaining to a friend. Keep ALL the information but use simpler words and shorter sentences. Do NOT add explanations or meta-commentary - just output the rewritten text.
+    return `Rewrite this text as audiobook narration. Keep ALL information. Use natural, flowing language with shorter sentences. Begin directly with the content — no greetings, no "Hey", no "So", no filler openers. Output only the rewritten text.
 
 Text:
 ${chunk}
 
 Rewritten:`;
   } else {
-    return `Rewrite this text for professional audiobook narration. Use clear, accessible language while keeping all details. Simplify complex sentences. Do NOT add explanations - just output the rewritten text.
+    return `Rewrite this as clear professional audiobook narration. Keep ALL information. Use accessible language with shorter sentences. Begin directly with the content — no filler phrases or transitions. Output only the rewritten text.
 
 Text:
 ${chunk}
