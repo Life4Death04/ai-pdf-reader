@@ -6,7 +6,7 @@ import {
   saveFileToDisk,
   createDocumentRecord,
 } from "@/lib/services/uploadService";
-import { runBackgroundProcessing } from "@/lib/services/processingService";
+import { runBackgroundProcessing, getProcessingConfig } from "@/lib/services/processingService";
 import { withErrorHandler, assertValid } from "@/lib/errors/errorHandler";
 import {
   ValidationError,
@@ -58,7 +58,11 @@ export const POST = withRequestLogging(
     // ── Fire-and-forget background processing ─────────────────────────────
     // We do NOT await this. The response is sent immediately and processing
     // continues in the background, updating document.status as it progresses.
-    void runBackgroundProcessing(document.id);
+    const enableAiRewrite = formData.get("enableAiRewrite") === "true";
+    void runBackgroundProcessing(document.id, {
+      ...getProcessingConfig(),
+      enableAiRewrite,
+    });
 
     // ── Audit log ──────────────────────────────────────────────────────────
     logAudit({
