@@ -9,6 +9,7 @@
  * - Cleanup on document deletion
  */
 
+import { createHash } from "crypto";
 import { prisma } from "../prisma/prisma";
 import type { AudioChunk } from "../../generated/prisma";
 import { ChunkStatus } from "../../generated/prisma";
@@ -37,22 +38,35 @@ export async function generateAndStoreChunkAudio(params: {
 }): Promise<AudioChunk> {
   const { documentId, chunkIndex, text } = params;
 
-  // Deduplication: check if audio already exists for this chunk
+  const incomingHash = createHash("sha256").update(text).digest("hex");
+
   const existing = await prisma.audioChunk.findUnique({
     where: { documentId_chunkIndex: { documentId, chunkIndex } },
   });
 
   if (existing) {
+    if (existing.textHash === incomingHash) {
+      // Text is identical to what was used to generate the current audio — skip.
+      console.log(
+        `[audioService] Chunk ${chunkIndex} of ${documentId} unchanged (hash match), skipping`
+      );
+      await prisma.textChunk.updateMany({
+        where: { documentId, index: chunkIndex, mode: "FULL_TEXT" },
+        data: { status: ChunkStatus.DONE },
+      });
+      await updateDocumentProgress(documentId, prisma);
+      return existing;
+    }
+
+    // Text changed (or legacy record with no hash) — delete stale audio and regenerate.
     console.log(
-      `[audioService] Chunk ${chunkIndex} of ${documentId} already exists, skipping`
+      `[audioService] Chunk ${chunkIndex} of ${documentId} text changed, replacing audio`
     );
-    // Ensure the TextChunk reflects DONE even on a re-run
-    await prisma.textChunk.updateMany({
-      where: { documentId, index: chunkIndex, mode: "FULL_TEXT" },
-      data: { status: ChunkStatus.DONE },
+    const { deleteDocumentAudioFromS3 } = await import("../storage/s3");
+    await deleteDocumentAudioFromS3([existing.s3Key]).catch(() => {});
+    await prisma.audioChunk.delete({
+      where: { documentId_chunkIndex: { documentId, chunkIndex } },
     });
-    await updateDocumentProgress(documentId, prisma);
-    return existing;
   }
 
   // Mark chunk as generating so the frontend can show progress
@@ -86,6 +100,7 @@ export async function generateAndStoreChunkAudio(params: {
       s3Key,
       s3Url,
       duration,
+      textHash: incomingHash,
     },
   });
 

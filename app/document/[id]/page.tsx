@@ -297,6 +297,7 @@ export default function DocumentPlayerPage() {
                 documentStatus={document.status}
                 totalChunks={document.totalChunks}
                 onChunkChange={handleChunkChange}
+                onPlayStateChange={setIsPlaying}
               />
             </motion.div>
           </div>

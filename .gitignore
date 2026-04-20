@@ -47,3 +47,6 @@ next-env.d.ts
 # keep the .env.example but not .env
 .env.example
 next-env.d.ts
+
+#TTS audio-cache
+*.pyc

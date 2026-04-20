@@ -168,6 +168,7 @@ exports.Prisma.AudioChunkScalarFieldEnum = {
   s3Key: 's3Key',
   s3Url: 's3Url',
   duration: 'duration',
+  textHash: 'textHash',
   createdAt: 'createdAt',
   documentId: 'documentId',
   chunkIndex: 'chunkIndex'
