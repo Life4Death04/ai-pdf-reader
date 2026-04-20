@@ -24,7 +24,7 @@ import { deleteFileFromDisk } from "./uploadService";
 export async function getUserDocuments(
   userId: string,
   prisma: PrismaClient
-): Promise<Array<Document & { _count: { chunks: number } }>> {
+): Promise<Array<Document & { _count: { chunks: number }; playbackProgress: { time: number }[] }>> {
   return prisma.document.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -35,6 +35,7 @@ export async function getUserDocuments(
       fileSize: true,
       pageCount: true,
       status: true,
+      audioDuration: true,
       totalChunks: true,
       processedChunks: true,
       createdAt: true,
@@ -42,8 +43,12 @@ export async function getUserDocuments(
       errorCode: true,
       failedAt: true,
       _count: { select: { chunks: true } },
+      playbackProgress: {
+        where: { userId },
+        select: { time: true },
+      },
     },
-  }) as Promise<Array<Document & { _count: { chunks: number } }>>;
+  }) as Promise<Array<Document & { _count: { chunks: number }; playbackProgress: { time: number }[] }>>;
 }
 
 /**
