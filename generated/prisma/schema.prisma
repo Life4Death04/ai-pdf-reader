@@ -64,6 +64,7 @@ model Document {
   fileSize        Int? // bytes
   pageCount       Int?
   extractedText   String?        @db.Text
+  language        String         @default("en")
   status          DocumentStatus @default(UPLOADED)
   audioDuration   Float? // Total audio duration in seconds (for FULL_TEXT mode)
   totalChunks     Int            @default(0) // Total FULL_TEXT chunks expected
