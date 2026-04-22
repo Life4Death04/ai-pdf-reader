@@ -144,6 +144,7 @@ export async function rewriteDocumentChunks(
   documentId: string,
   options: {
     mode?: "audiobook" | "formal";
+    language?: "en" | "es";
     concurrency?: number;
   } = {}
 ): Promise<void> {
@@ -155,7 +156,7 @@ export async function rewriteDocumentChunks(
   // If you upgrade to a parallel-capable backend (vLLM, llama.cpp --parallel,
   // or a hosted API), bump this via the AI_CONCURRENCY env var to match
   // the server's actual parallel capacity (e.g. AI_CONCURRENCY=4 for 4 workers).
-  const { mode = "audiobook", concurrency = 1 } = options;
+  const { mode = "audiobook", language = "en", concurrency = 1 } = options;
 
   try {
     console.log("\n" + "=".repeat(70));
@@ -217,7 +218,7 @@ export async function rewriteDocumentChunks(
           console.log(`[rewrite] Chunk ${index + 1}/${total} already rewritten, proceeding to audio`);
         } else {
           try {
-            const rewritten = await rewriteChunk(chunk.text, { mode, skipShort: true });
+            const rewritten = await rewriteChunk(chunk.text, { mode, language, skipShort: true });
             await prisma.textChunk.update({
               where: { id: chunk.id },
               data: { processed: rewritten },
@@ -236,6 +237,7 @@ export async function rewriteDocumentChunks(
             documentId,
             chunkIndex: chunk.index,
             text: textForAudio,
+            language,
           });
           console.log(`[rewrite] ✅ Chunk ${index + 1}/${total} audio generated and uploaded`);
         } catch (audioError) {
