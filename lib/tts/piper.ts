@@ -10,6 +10,13 @@ const PIPER_URL = process.env.TTS_SERVICE_URL ?? "http://localhost:5050";
 const AUDIO_CACHE_DIR =
   process.env.AUDIO_CACHE_DIR ?? "./public/audio-cache";
 
+function getVoiceForLanguage(language: "en" | "es"): string {
+  if (language === "es") {
+    return process.env.TTS_VOICE_ES ?? "es_ES-sharvard-medium";
+  }
+  return process.env.TTS_VOICE_EN ?? "en_US-amy-medium";
+}
+
 // ─────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────
@@ -17,6 +24,7 @@ const AUDIO_CACHE_DIR =
 export interface TTSOptions {
   text: string;
   voice?: string;
+  language?: "en" | "es";
   speed?: number;
   chunkId?: string; // Optional: for cache key naming
   chunkIndex?: number; // Chunk index (0-based) for limiting TTS generation
@@ -40,7 +48,7 @@ export interface TTSResult {
 export async function generateAudio(
   options: TTSOptions
 ): Promise<TTSResult> {
-  const { text, voice, speed, chunkId } = options;
+  const { text, voice, language = "en", speed, chunkId } = options;
 
   console.log(`[TTS] Starting audio generation for chunk: ${chunkId ?? "unnamed"}`);
   console.log(`[TTS] Text length: ${text.length} characters`);
@@ -71,7 +79,7 @@ export async function generateAudio(
 
   const requestBody = {
     text,
-    ...(voice && { voice }),
+    voice: voice ?? getVoiceForLanguage(language ?? "en"),
     ...(speed && { length_scale: 1 / speed }), // Piper uses inverse of speed
   };
 
