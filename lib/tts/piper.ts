@@ -12,7 +12,7 @@ const AUDIO_CACHE_DIR =
 
 function getVoiceForLanguage(language: "en" | "es"): string {
   if (language === "es") {
-    return process.env.TTS_VOICE_ES ?? "es_ES-sharvard-medium";
+    return process.env.TTS_VOICE_ES ?? "es_MX-claude-high";
   }
   return process.env.TTS_VOICE_EN ?? "en_US-amy-medium";
 }
