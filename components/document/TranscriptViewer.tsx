@@ -67,7 +67,7 @@ export function TranscriptViewer({
   }
 
   return (
-    <div className="relative p-6">
+    <div className="relative p-3">
       {/* Active indicator bar */}
       <div
         className="absolute left-0 top-4 bottom-4 w-[3px] rounded-full transition-colors duration-500"
@@ -85,7 +85,7 @@ export function TranscriptViewer({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="text-sm leading-relaxed pl-4 text-on-surface"
+          className="text-sm leading-relaxed pl-2 text-on-surface"
         >
           {activeChunk.text}
         </motion.p>
