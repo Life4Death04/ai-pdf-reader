@@ -8,6 +8,7 @@ import { updateDocumentProgress } from "@/lib/services/documentService";
 import { generateAndStoreChunkAudio } from "@/lib/services/audioService";
 import { asyncPoolWithProgress } from "@/lib/utils/asyncPool";
 import { createErrorDetails } from "@/lib/utils/errorClassifier";
+import { detectLanguage } from "@/lib/utils/detectLanguage";
 
 /**
  * FAST PATH: Processes a document through extraction and chunking only.
@@ -48,11 +49,15 @@ export async function processDocument(documentId: string): Promise<void> {
     const { text, pageCount } = await extractTextFromPDF(fileBuffer);
     console.log(`[process] Extracted text from document ${documentId}: ${text.length} chars, ${pageCount} pages`);
 
+    const detectedLanguage = detectLanguage(text);
+    console.log(`[process] Detected language: ${detectedLanguage}`);
+
     await prisma.document.update({
       where: { id: documentId },
       data: {
         extractedText: text,
         pageCount,
+        language: detectedLanguage,
         status: DocumentStatus.CHUNKING,
       },
     });
