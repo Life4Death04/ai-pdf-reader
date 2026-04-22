@@ -34,11 +34,29 @@ let modelWarmedUp = false;
 
 /**
  * Constructs the system prompt for the rewrite task.
- * 
+ *
  * OPTIMIZED FOR PHI3: Shorter, more direct prompts work better with smaller models.
  * Phi3 tends to be verbose, so we keep instructions minimal and focused.
  */
-function buildRewritePrompt(chunk: string, mode: "audiobook" | "formal" = "audiobook"): string {
+function buildRewritePrompt(chunk: string, mode: "audiobook" | "formal" = "audiobook", language: "en" | "es" = "en"): string {
+  if (language === "es") {
+    if (mode === "audiobook") {
+      return `Reescribe este texto como narración de audiolibro natural. Mantén TODA la información. Usa lenguaje natural y fluido con oraciones más cortas. Comienza directamente con el contenido — sin saludos, sin "Hola", sin "entonces", sin frases de relleno. Devuelve solo el texto reescrito.
+
+Texto:
+${chunk}
+
+Reescrito:`;
+    } else {
+      return `Reescribe esto como narración clara y profesional de audiolibro. Mantén TODA la información. Usa lenguaje accesible con oraciones más cortas. Comienza directamente con el contenido — sin frases de relleno o transiciones. Devuelve solo el texto reescrito.
+
+Texto:
+${chunk}
+
+Reescrito:`;
+    }
+  }
+
   if (mode === "audiobook") {
     return `Rewrite this text as audiobook narration. Keep ALL information. Use natural, flowing language with shorter sentences. Begin directly with the content — no greetings, no "Hey", no "So", no filler openers. Output only the rewritten text.
 
@@ -165,10 +183,11 @@ export async function rewriteChunk(
   chunk: string,
   options: {
     mode?: "audiobook" | "formal";
+    language?: "en" | "es";
     skipShort?: boolean;
   } = {}
 ): Promise<string> {
-  const { mode = "audiobook", skipShort = true } = options;
+  const { mode = "audiobook", language = "en", skipShort = true } = options;
 
   console.log("\n" + "─".repeat(60));
   console.log("🎙️  AI REWRITE STARTED");
@@ -190,7 +209,7 @@ export async function rewriteChunk(
   // ───────────────────────────────────────────────────────────────────────────
   // Build Prompt
   // ───────────────────────────────────────────────────────────────────────────
-  const prompt = buildRewritePrompt(chunk, mode);
+  const prompt = buildRewritePrompt(chunk, mode, language);
 
   try {
     // ─────────────────────────────────────────────────────────────────────────
@@ -305,11 +324,12 @@ export async function rewriteChunks(
   chunks: string[],
   options: {
     mode?: "audiobook" | "formal";
+    language?: "en" | "es";
     onProgress?: (completed: number, total: number) => void;
     skipWarmup?: boolean;
   } = {}
 ): Promise<string[]> {
-  const { mode = "audiobook", onProgress, skipWarmup = false } = options;
+  const { mode = "audiobook", language = "en", onProgress, skipWarmup = false } = options;
 
   console.log("\n" + "=".repeat(60));
   console.log(`🎙️  BATCH REWRITE: ${chunks.length} chunks`);
@@ -326,8 +346,8 @@ export async function rewriteChunks(
 
   for (let i = 0; i < chunks.length; i++) {
     console.log(`\n📦 Processing chunk ${i + 1}/${chunks.length}`);
-    
-    const result = await rewriteChunk(chunks[i], { mode });
+
+    const result = await rewriteChunk(chunks[i], { mode, language });
     rewritten.push(result);
 
     if (onProgress) {
