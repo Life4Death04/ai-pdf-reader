@@ -137,6 +137,7 @@ exports.Prisma.DocumentScalarFieldEnum = {
   fileSize: 'fileSize',
   pageCount: 'pageCount',
   extractedText: 'extractedText',
+  language: 'language',
   status: 'status',
   audioDuration: 'audioDuration',
   totalChunks: 'totalChunks',

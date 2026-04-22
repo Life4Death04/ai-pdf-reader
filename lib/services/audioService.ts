@@ -29,14 +29,16 @@ import { updateDocumentProgress } from "./documentService";
  * @param params.documentId - Document ID
  * @param params.chunkIndex - Chunk index (0-based)
  * @param params.text - Text content to convert to audio
+ * @param params.language - Document language for voice selection (optional)
  * @returns The existing or newly created AudioChunk record
  */
 export async function generateAndStoreChunkAudio(params: {
   documentId: string;
   chunkIndex: number;
   text: string;
+  language?: "en" | "es";
 }): Promise<AudioChunk> {
-  const { documentId, chunkIndex, text } = params;
+  const { documentId, chunkIndex, text, language } = params;
 
   const incomingHash = createHash("sha256").update(text).digest("hex");
 
@@ -78,6 +80,7 @@ export async function generateAndStoreChunkAudio(params: {
   // Generate audio via TTS
   const ttsResult = await generateAudio({
     text,
+    language,
     chunkId: `${documentId}#${chunkIndex}`,
     chunkIndex,
   });
@@ -124,10 +127,22 @@ export async function generateAndStoreChunkAudio(params: {
  * Errors on individual chunks are logged but don't abort the batch.
  *
  * @param documentId - Document ID to generate audio for
+ * @param language - Document language for voice selection (default "en")
  */
 export async function generateAllChunkAudio(
-  documentId: string
+  documentId: string,
+  language: "en" | "es" = "en"
 ): Promise<void> {
+  let resolvedLanguage = language;
+
+  if (!language) {
+    const doc = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: { language: true },
+    });
+    resolvedLanguage = (doc?.language as "en" | "es") ?? "en";
+  }
+
   const chunks = await prisma.textChunk.findMany({
     where: { documentId, mode: "FULL_TEXT" },
     orderBy: { index: "asc" },
@@ -156,6 +171,7 @@ export async function generateAllChunkAudio(
         documentId,
         chunkIndex: chunk.index,
         text,
+        language: resolvedLanguage,
       });
 
       successCount++;

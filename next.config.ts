@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  allowedDevOrigins: ["*.trycloudflare.com", "frame-wins-cancel-ghz.trycloudflare.com"],
 };
 
 export default nextConfig;

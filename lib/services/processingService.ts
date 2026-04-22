@@ -7,6 +7,7 @@
  * - Processing status management
  */
 
+import { prisma } from "../prisma/prisma";
 import { processDocument, rewriteDocumentChunks } from "../pdf/process";
 
 export interface ProcessingConfig {
@@ -57,25 +58,33 @@ export async function runBackgroundProcessing(
     await processDocument(documentId);
     console.log(`[processing] Document ${documentId} is READY`);
 
+    // Fetch document language for subsequent processing steps
+    const doc = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: { language: true },
+    });
+    const language = (doc?.language as "en" | "es") ?? "en";
+
     if (config.enableAiRewrite) {
       // AI rewrite path: each chunk is rewritten then immediately gets TTS + S3
       // upload without waiting for the rest. generateAllChunkAudio is NOT called
       // separately — audio generation is embedded inside rewriteDocumentChunks.
       console.log(
-        `[processing] Starting AI rewrite + audio pipeline for ${documentId} (mode: ${config.rewriteMode}, concurrency: ${config.aiConcurrency})`
+        `[processing] Starting AI rewrite + audio pipeline for ${documentId} (mode: ${config.rewriteMode}, concurrency: ${config.aiConcurrency}, language: ${language})`
       );
 
       await rewriteDocumentChunks(documentId, {
         mode: config.rewriteMode,
+        language,
         concurrency: config.aiConcurrency,
       });
 
       console.log(`[processing] AI rewrite + audio pipeline completed for ${documentId}`);
     } else {
       // No rewrite: generate audio from original text in batch
-      console.log(`[processing] Starting audio generation for ${documentId}`);
+      console.log(`[processing] Starting audio generation for ${documentId} (language: ${language})`);
       const { generateAllChunkAudio } = await import("./audioService");
-      await generateAllChunkAudio(documentId);
+      await generateAllChunkAudio(documentId, language);
       console.log(`[processing] Audio generation completed for ${documentId}`);
     }
   } catch (error) {

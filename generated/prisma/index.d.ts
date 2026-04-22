@@ -2520,6 +2520,7 @@ export namespace Prisma {
     fileSize: number | null
     pageCount: number | null
     extractedText: string | null
+    language: string | null
     status: $Enums.DocumentStatus | null
     audioDuration: number | null
     totalChunks: number | null
@@ -2540,6 +2541,7 @@ export namespace Prisma {
     fileSize: number | null
     pageCount: number | null
     extractedText: string | null
+    language: string | null
     status: $Enums.DocumentStatus | null
     audioDuration: number | null
     totalChunks: number | null
@@ -2560,6 +2562,7 @@ export namespace Prisma {
     fileSize: number
     pageCount: number
     extractedText: number
+    language: number
     status: number
     audioDuration: number
     totalChunks: number
@@ -2598,6 +2601,7 @@ export namespace Prisma {
     fileSize?: true
     pageCount?: true
     extractedText?: true
+    language?: true
     status?: true
     audioDuration?: true
     totalChunks?: true
@@ -2618,6 +2622,7 @@ export namespace Prisma {
     fileSize?: true
     pageCount?: true
     extractedText?: true
+    language?: true
     status?: true
     audioDuration?: true
     totalChunks?: true
@@ -2638,6 +2643,7 @@ export namespace Prisma {
     fileSize?: true
     pageCount?: true
     extractedText?: true
+    language?: true
     status?: true
     audioDuration?: true
     totalChunks?: true
@@ -2745,6 +2751,7 @@ export namespace Prisma {
     fileSize: number | null
     pageCount: number | null
     extractedText: string | null
+    language: string
     status: $Enums.DocumentStatus
     audioDuration: number | null
     totalChunks: number
@@ -2784,6 +2791,7 @@ export namespace Prisma {
     fileSize?: boolean
     pageCount?: boolean
     extractedText?: boolean
+    language?: boolean
     status?: boolean
     audioDuration?: boolean
     totalChunks?: boolean
@@ -2809,6 +2817,7 @@ export namespace Prisma {
     fileSize?: boolean
     pageCount?: boolean
     extractedText?: boolean
+    language?: boolean
     status?: boolean
     audioDuration?: boolean
     totalChunks?: boolean
@@ -2830,6 +2839,7 @@ export namespace Prisma {
     fileSize?: boolean
     pageCount?: boolean
     extractedText?: boolean
+    language?: boolean
     status?: boolean
     audioDuration?: boolean
     totalChunks?: boolean
@@ -2851,6 +2861,7 @@ export namespace Prisma {
     fileSize?: boolean
     pageCount?: boolean
     extractedText?: boolean
+    language?: boolean
     status?: boolean
     audioDuration?: boolean
     totalChunks?: boolean
@@ -2863,7 +2874,7 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "status" | "audioDuration" | "totalChunks" | "processedChunks" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
+  export type DocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "fileName" | "fileUrl" | "fileSize" | "pageCount" | "extractedText" | "language" | "status" | "audioDuration" | "totalChunks" | "processedChunks" | "createdAt" | "updatedAt" | "errorMessage" | "errorCode" | "failedAt" | "userId", ExtArgs["result"]["document"]>
   export type DocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     chunks?: boolean | Document$chunksArgs<ExtArgs>
@@ -2894,6 +2905,7 @@ export namespace Prisma {
       fileSize: number | null
       pageCount: number | null
       extractedText: string | null
+      language: string
       status: $Enums.DocumentStatus
       audioDuration: number | null
       totalChunks: number
@@ -3338,6 +3350,7 @@ export namespace Prisma {
     readonly fileSize: FieldRef<"Document", 'Int'>
     readonly pageCount: FieldRef<"Document", 'Int'>
     readonly extractedText: FieldRef<"Document", 'String'>
+    readonly language: FieldRef<"Document", 'String'>
     readonly status: FieldRef<"Document", 'DocumentStatus'>
     readonly audioDuration: FieldRef<"Document", 'Float'>
     readonly totalChunks: FieldRef<"Document", 'Int'>
@@ -7331,6 +7344,7 @@ export namespace Prisma {
     fileSize: 'fileSize',
     pageCount: 'pageCount',
     extractedText: 'extractedText',
+    language: 'language',
     status: 'status',
     audioDuration: 'audioDuration',
     totalChunks: 'totalChunks',
@@ -7601,6 +7615,7 @@ export namespace Prisma {
     fileSize?: IntNullableFilter<"Document"> | number | null
     pageCount?: IntNullableFilter<"Document"> | number | null
     extractedText?: StringNullableFilter<"Document"> | string | null
+    language?: StringFilter<"Document"> | string
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableFilter<"Document"> | number | null
     totalChunks?: IntFilter<"Document"> | number
@@ -7625,6 +7640,7 @@ export namespace Prisma {
     fileSize?: SortOrderInput | SortOrder
     pageCount?: SortOrderInput | SortOrder
     extractedText?: SortOrderInput | SortOrder
+    language?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrderInput | SortOrder
     totalChunks?: SortOrder
@@ -7652,6 +7668,7 @@ export namespace Prisma {
     fileSize?: IntNullableFilter<"Document"> | number | null
     pageCount?: IntNullableFilter<"Document"> | number | null
     extractedText?: StringNullableFilter<"Document"> | string | null
+    language?: StringFilter<"Document"> | string
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableFilter<"Document"> | number | null
     totalChunks?: IntFilter<"Document"> | number
@@ -7676,6 +7693,7 @@ export namespace Prisma {
     fileSize?: SortOrderInput | SortOrder
     pageCount?: SortOrderInput | SortOrder
     extractedText?: SortOrderInput | SortOrder
+    language?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrderInput | SortOrder
     totalChunks?: SortOrder
@@ -7704,6 +7722,7 @@ export namespace Prisma {
     fileSize?: IntNullableWithAggregatesFilter<"Document"> | number | null
     pageCount?: IntNullableWithAggregatesFilter<"Document"> | number | null
     extractedText?: StringNullableWithAggregatesFilter<"Document"> | string | null
+    language?: StringWithAggregatesFilter<"Document"> | string
     status?: EnumDocumentStatusWithAggregatesFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableWithAggregatesFilter<"Document"> | number | null
     totalChunks?: IntWithAggregatesFilter<"Document"> | number
@@ -8027,6 +8046,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -8050,6 +8070,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -8073,6 +8094,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -8096,6 +8118,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -8119,6 +8142,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -8139,6 +8163,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -8158,6 +8183,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -8651,6 +8677,7 @@ export namespace Prisma {
     fileSize?: SortOrder
     pageCount?: SortOrder
     extractedText?: SortOrder
+    language?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrder
     totalChunks?: SortOrder
@@ -8679,6 +8706,7 @@ export namespace Prisma {
     fileSize?: SortOrder
     pageCount?: SortOrder
     extractedText?: SortOrder
+    language?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrder
     totalChunks?: SortOrder
@@ -8699,6 +8727,7 @@ export namespace Prisma {
     fileSize?: SortOrder
     pageCount?: SortOrder
     extractedText?: SortOrder
+    language?: SortOrder
     status?: SortOrder
     audioDuration?: SortOrder
     totalChunks?: SortOrder
@@ -9646,6 +9675,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -9668,6 +9698,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -9747,6 +9778,7 @@ export namespace Prisma {
     fileSize?: IntNullableFilter<"Document"> | number | null
     pageCount?: IntNullableFilter<"Document"> | number | null
     extractedText?: StringNullableFilter<"Document"> | string | null
+    language?: StringFilter<"Document"> | string
     status?: EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
     audioDuration?: FloatNullableFilter<"Document"> | number | null
     totalChunks?: IntFilter<"Document"> | number
@@ -10025,6 +10057,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10047,6 +10080,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10085,6 +10119,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10107,6 +10142,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10129,6 +10165,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10151,6 +10188,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10189,6 +10227,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10211,6 +10250,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10258,6 +10298,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10280,6 +10321,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10349,6 +10391,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10371,6 +10414,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10393,6 +10437,7 @@ export namespace Prisma {
     fileSize?: number | null
     pageCount?: number | null
     extractedText?: string | null
+    language?: string
     status?: $Enums.DocumentStatus
     audioDuration?: number | null
     totalChunks?: number
@@ -10421,6 +10466,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10443,6 +10489,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
@@ -10465,6 +10512,7 @@ export namespace Prisma {
     fileSize?: NullableIntFieldUpdateOperationsInput | number | null
     pageCount?: NullableIntFieldUpdateOperationsInput | number | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: StringFieldUpdateOperationsInput | string
     status?: EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
     audioDuration?: NullableFloatFieldUpdateOperationsInput | number | null
     totalChunks?: IntFieldUpdateOperationsInput | number
