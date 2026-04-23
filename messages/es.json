@@ -1,0 +1,51 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "search": "Buscar"
+  },
+  "header": {
+    "appName": "Auralis",
+    "appDescription": "PDF a Audio"
+  },
+  "sidebar": {
+    "library": "Biblioteca",
+    "recent": "Reciente",
+    "uploadPdf": "Subir PDF"
+  },
+  "dashboard": {
+    "title": "Tu Biblioteca",
+    "subtitle": "en tu colección",
+    "allDocuments": "Todos los Documentos",
+    "continueListening": "Continuar Escuchando",
+    "processing": "Procesando",
+    "emptyState": "Tu biblioteca está vacía",
+    "uploadFirstPdf": "Sube tu primer PDF",
+    "searchPlaceholder": "Buscar...",
+    "noMatches": "No hay documentos que coincidan con tu búsqueda",
+    "documentCount": "{count, plural, one {documento} other {documentos}}"
+  },
+  "upload": {
+    "uploading": "Subiendo...",
+    "complete": "Carga Completada",
+    "processing": "Procesando tu documento...",
+    "dropHint": "Suelta tu PDF",
+    "addLibrary": "Añadir a Biblioteca",
+    "clickBrowse": "Suelta un PDF o haz clic para examinar",
+    "aiRewrite": "Reescribir con IA"
+  },
+  "document": {
+    "resumeSession": "Reanudar Sesión",
+    "pages": "páginas",
+    "rewriteAi": "Reescribir con IA",
+    "deleteDocument": "Eliminar documento"
+  },
+  "audio": {
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "skipBack": "Retroceder 15 segundos",
+    "skipForward": "Avanzar 15 segundos"
+  }
+}
