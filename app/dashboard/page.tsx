@@ -25,6 +25,8 @@ interface Document {
   status: string;
   totalChunks: number;
   processedChunks: number;
+  audioDuration?: number | null;
+  playbackProgress?: { time: number }[];
   createdAt: string;
   _count?: { chunks: number };
 }
@@ -301,9 +303,20 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Progress bar */}
-                    <div className="mt-5 h-1 rounded-full bg-white/5">
-                      <div className="h-full w-[35%] rounded-full secondary-gradient opacity-70" />
-                    </div>
+                    {(() => {
+                      const saved = recentDocument.playbackProgress?.[0]?.time ?? 0;
+                      const pct = recentDocument.audioDuration && recentDocument.audioDuration > 0
+                        ? Math.min(100, (saved / recentDocument.audioDuration) * 100)
+                        : 0;
+                      return (
+                        <div className="mt-5 h-1 rounded-full bg-white/5">
+                          <div
+                            className="h-full rounded-full secondary-gradient opacity-70 transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Link>
               </motion.div>
@@ -421,7 +434,12 @@ export default function DashboardPage() {
                           chunkCount={doc._count?.chunks}
                           totalChunks={doc.totalChunks}
                           processedChunks={doc.processedChunks}
-                          progress={doc.status === "READY" ? 70 : 0}
+                          progress={(() => {
+                            const saved = doc.playbackProgress?.[0]?.time ?? 0;
+                            return doc.audioDuration && doc.audioDuration > 0
+                              ? Math.min(100, Math.round((saved / doc.audioDuration) * 100))
+                              : 0;
+                          })()}
                           onDelete={handleDelete}
                         />
                       </motion.div>
