@@ -371,7 +371,7 @@ export default function DashboardPage() {
               {isLoading ? (
                 <div className={`grid gap-5 ${
                   viewMode === "grid"
-                    ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                    ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
                     : "grid-cols-1"
                 }`}>
                   {[...Array(8)].map((_, i) => (
@@ -412,8 +412,8 @@ export default function DashboardPage() {
                   layout
                   className={`grid gap-5 ${
                     viewMode === "grid"
-                      ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
-                      : "grid-cols-1"
+                      ? "grid-cols-1"
+                      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
                   }`}
                 >
                   <AnimatePresence>
