@@ -1,0 +1,118 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ai_pdf_reader}:${POSTGRES_PASSWORD:-ai_pdf_reader_local_password}@db:5432/${POSTGRES_DB:-ai_pdf_reader}
+      DEFAULT_USER_EMAIL: ${DEFAULT_USER_EMAIL:-default@localhost}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-50}
+      ENABLE_AI_REWRITE: ${ENABLE_AI_REWRITE:-false}
+      AI_CONCURRENCY: ${AI_CONCURRENCY:-1}
+      AI_REWRITE_MODE: ${AI_REWRITE_MODE:-audiobook}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-phi3}
+      TTS_SERVICE_URL: http://tts:5050
+      TTS_VOICE_ES: ${TTS_VOICE_ES:-es_MX-claude-high}
+      TTS_VOICE_EN: ${TTS_VOICE_EN:-en_US-amy-medium}
+      AUDIO_CACHE_DIR: ${AUDIO_CACHE_DIR:-/app/public/audio-cache}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+      ENABLE_MONITORING: ${ENABLE_MONITORING:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${APP_HOST:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    volumes:
+      - uploads:/app/uploads
+      - audio_cache:/app/public/audio-cache
+    depends_on:
+      db:
+        condition: service_healthy
+      tts:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/monitoring/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - internal
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ai_pdf_reader}
+      POSTGRES_USER: ${POSTGRES_USER:-ai_pdf_reader}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_pdf_reader_local_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  tts:
+    build:
+      context: .
+      dockerfile: tts-service/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "5050"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; socket.create_connection(('127.0.0.1', 5050), 3).close()\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - internal
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: ${OLLAMA_NO_CLOUD:-true}
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
+    networks:
+      - internal
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ai_pdf_reader}:${POSTGRES_PASSWORD:-ai_pdf_reader_local_password}@db:5432/${POSTGRES_DB:-ai_pdf_reader}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+    profiles:
+      - tools
+
+volumes:
+  audio_cache:
+  ollama_data:
+  postgres_data:
+  uploads:
+
+networks:
+  internal:
+    driver: bridge
