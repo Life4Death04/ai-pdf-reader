@@ -6,11 +6,12 @@ The Next.js app calls `TTS_SERVICE_URL` and defaults to `http://localhost:5050`.
 
 ## Setup
 
-Run these commands from the repository root:
+Run these commands from the repository root. Verify that `pwd` points to the `ai-pdf-reader` directory first:
 
 ```bash
-python3 -m venv tts-service/venv
-tts-service/venv/bin/python -m pip install -r tts-service/requirements.txt
+pwd
+python3 -m venv ./tts-service/venv
+./tts-service/venv/bin/python -m pip install -r ./tts-service/requirements.txt
 ```
 
 ## Start
@@ -18,7 +19,7 @@ tts-service/venv/bin/python -m pip install -r tts-service/requirements.txt
 Run from the repository root so `--data-dir .` can find both voice models:
 
 ```bash
-tts-service/venv/bin/python -m piper.http_server \
+./tts-service/venv/bin/python -m piper.http_server \
   --host 0.0.0.0 \
   --port 5050 \
   --model es_MX-claude-high.onnx \
@@ -26,6 +27,8 @@ tts-service/venv/bin/python -m piper.http_server \
 ```
 
 The default Spanish model is `es_MX-claude-high`. The server can also load `en_US-amy-medium` when the Next.js app sends it in the request body.
+
+If Bash reports `/tts-service/venv/bin/python: No such file or directory`, the command was run with a leading `/`. Use `./tts-service/venv/bin/python` from the repository root, or recreate the virtualenv with the setup commands above.
 
 ## Quick Check
 
