@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -44,9 +45,14 @@ next-env.d.ts
 /uploads
 /public/audio-cache
 
-# keep the .env.example but not .env
-.env.example
-next-env.d.ts
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*/.venv/
+*/venv/
 
-#TTS audio-cache
-*.pyc
+# local tooling
+.atl/
