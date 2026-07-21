@@ -1,7 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Play, Trash2, FileText, Sparkles, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { StatusBadge } from "./StatusBadge";
@@ -77,6 +78,7 @@ export function DocumentCard({
   progress = 0,
   onDelete,
 }: DocumentCardProps) {
+  const t = useTranslations();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
   const isReady = status === "READY" || status === "PARTIALLY_READY";
@@ -186,7 +188,7 @@ export function DocumentCard({
                   bg-black/40 backdrop-blur-sm hover:bg-primary/20
                   text-white/60 hover:text-primary transition-all duration-200
                   ${isRewriting ? "cursor-not-allowed opacity-50" : ""}`}
-                title="Rewrite with AI"
+                title={t("document.rewriteAi")}
               >
                 {isRewriting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -194,7 +196,7 @@ export function DocumentCard({
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
                 <span className="text-[11px] font-medium">
-                  {isRewriting ? "Rewriting…" : "Rewrite with AI"}
+                  {isRewriting ? "Rewriting…" : t("document.rewriteAi")}
                 </span>
               </button>
             )}
@@ -207,7 +209,7 @@ export function DocumentCard({
                 p-2 rounded-lg bg-black/40 backdrop-blur-sm hover:bg-red-500/20
                 text-white/60 hover:text-red-400 transition-all duration-200
                 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Delete document"
+              title={t("document.deleteDocument")}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

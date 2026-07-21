@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Upload as UploadIcon, FileUp, Check, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,6 +12,7 @@ interface UploadZoneProps {
 type UploadState = "idle" | "dragging" | "uploading" | "success";
 
 export function UploadZone({ onUploadComplete }: UploadZoneProps) {
+  const t = useTranslations();
   const [state, setState] = useState<UploadState>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileName, setFileName] = useState("");
@@ -177,21 +179,21 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
           <div className="space-y-1.5">
             {state === "uploading" ? (
               <>
-                <p className="text-sm font-semibold text-on-surface">Uploading...</p>
+                <p className="text-sm font-semibold text-on-surface">{t("upload.uploading")}</p>
                 <p className="text-xs text-on-surface-variant truncate max-w-[200px]">{fileName}</p>
               </>
             ) : state === "success" ? (
               <>
-                <p className="text-sm font-semibold text-secondary">Upload Complete</p>
-                <p className="text-xs text-on-surface-variant">Processing your document...</p>
+                <p className="text-sm font-semibold text-secondary">{t("upload.complete")}</p>
+                <p className="text-xs text-on-surface-variant">{t("upload.processing")}</p>
               </>
             ) : (
               <>
                 <p className="text-sm font-semibold text-on-surface">
-                  {state === "dragging" ? "Drop your PDF" : "Add to Library"}
+                  {state === "dragging" ? t("upload.dropHint") : t("upload.addLibrary")}
                 </p>
                 <p className="text-xs text-on-surface-variant">
-                  Drop a PDF or click to browse
+                  {t("upload.clickBrowse")}
                 </p>
               </>
             )}
@@ -221,7 +223,7 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
             <div className="flex items-center gap-2">
               <Sparkles className={`w-3.5 h-3.5 transition-colors ${aiRewrite ? "text-primary" : "text-on-surface-variant"}`} />
               <span className={`text-xs font-medium transition-colors ${aiRewrite ? "text-on-surface" : "text-on-surface-variant"}`}>
-                Auto-Rewrite with AI
+                {t("upload.aiRewrite")}
               </span>
             </div>
 

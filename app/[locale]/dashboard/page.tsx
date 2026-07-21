@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Library,
   Clock,
@@ -14,7 +15,8 @@ import {
 import { UploadZone } from "@/components/upload/UploadZone";
 import { DocumentCard } from "@/components/document/DocumentCard";
 import { StatusBadge } from "@/components/document/StatusBadge";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Document {
@@ -40,6 +42,7 @@ async function loadDocuments(): Promise<Document[]> {
 }
 
 export default function DashboardPage() {
+  const t = useTranslations();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -115,12 +118,12 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-on-surface tracking-tight">
-                  Auralis
+                  {t("header.appName")}
                 </h1>
               </div>
             </div>
             <p className="text-[10px] font-medium text-on-surface-variant tracking-[0.15em] uppercase mt-1.5 ml-[42px]">
-              PDF to Audio
+              {t("header.appDescription")}
             </p>
           </div>
 
@@ -131,14 +134,14 @@ export default function DashboardPage() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-container-high/60 text-on-surface text-sm font-medium"
             >
               <Library className="w-4 h-4 text-primary" />
-              Library
+              {t("sidebar.library")}
             </Link>
             <Link
               href="/dashboard"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant text-sm hover:text-on-surface hover:bg-surface-container/50 transition-colors"
             >
               <Clock className="w-4 h-4" />
-              Recent
+              {t("sidebar.recent")}
             </Link>
           </nav>
 
@@ -152,7 +155,7 @@ export default function DashboardPage() {
                 glow-primary"
             >
               <Plus className="w-4 h-4" />
-              Upload PDF
+              {t("sidebar.uploadPdf")}
             </button>
           </div>
         </aside>
@@ -168,7 +171,7 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-3xl md:text-4xl font-bold text-on-surface"
                 >
-                  Your Library
+                  {t("dashboard.title")}
                 </motion.h2>
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
@@ -176,7 +179,7 @@ export default function DashboardPage() {
                   transition={{ delay: 0.05 }}
                   className="text-sm text-on-surface-variant mt-1"
                 >
-                  {documents.length} {documents.length === 1 ? "document" : "documents"} in your collection
+                  {documents.length} {t("dashboard.documentCount", { count: documents.length })} {t("dashboard.subtitle")}
                 </motion.p>
               </div>
 
@@ -186,7 +189,7 @@ export default function DashboardPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
                   <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder={t("dashboard.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 pr-4 py-2 rounded-lg bg-surface-container border border-surface
@@ -218,6 +221,9 @@ export default function DashboardPage() {
                     <List className="w-4 h-4" />
                   </button>
                 </div>
+
+                {/* Language Switcher */}
+                <LanguageSwitcher />
 
                 {/* Mobile upload button */}
                 <button
@@ -254,7 +260,7 @@ export default function DashboardPage() {
                 className="mb-10"
               >
                 <h3 className="text-xs font-semibold text-on-surface-variant tracking-[0.1em] uppercase mb-4">
-                  Continue Listening
+                  {t("dashboard.continueListening")}
                 </h3>
                 <Link href={`/document/${recentDocument.id}`} className="block group">
                   <div
@@ -278,13 +284,13 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-primary mb-1">Resume Session</p>
+                        <p className="text-xs font-medium text-primary mb-1">{t("document.resumeSession")}</p>
                         <h3 className="text-lg md:text-xl font-bold text-on-surface truncate">
                           {recentDocument.title}
                         </h3>
                         <div className="flex items-center gap-3 text-xs text-on-surface-variant mt-2">
                           {recentDocument.pageCount && (
-                            <span>{recentDocument.pageCount} pages</span>
+                            <span>{recentDocument.pageCount} {t("document.pages")}</span>
                           )}
                           <StatusBadge status={recentDocument.status} compact />
                         </div>
@@ -332,7 +338,7 @@ export default function DashboardPage() {
                   className="mb-8"
                 >
                   <h3 className="text-xs font-semibold text-on-surface-variant tracking-[0.1em] uppercase mb-3">
-                    Processing
+                    {t("dashboard.processing")}
                   </h3>
                   <div className="space-y-2">
                     {processingDocuments.map((doc) => (
@@ -364,7 +370,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xs font-semibold text-on-surface-variant tracking-[0.1em] uppercase">
-                  All Documents
+                  {t("dashboard.allDocuments")}
                 </h3>
               </div>
 
@@ -395,15 +401,15 @@ export default function DashboardPage() {
                   </div>
                   <p className="text-sm text-on-surface-variant mb-4">
                     {searchQuery
-                      ? "No documents match your search"
-                      : "Your library is empty"}
+                      ? t("dashboard.noMatches")
+                      : t("dashboard.emptyState")}
                   </p>
                   {!searchQuery && (
                     <button
                       onClick={() => setShowUpload(true)}
                       className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                     >
-                      Upload your first PDF
+                      {t("dashboard.uploadFirstPdf")}
                     </button>
                   )}
                 </motion.div>

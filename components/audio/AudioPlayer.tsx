@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Play, Pause, SkipBack, SkipForward, Loader2, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,6 +25,7 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ documentId, title, totalDuration, documentStatus, totalChunks, onChunkChange, onPlayStateChange }: AudioPlayerProps) {
+  const t = useTranslations();
   const audioRef = useRef<HTMLAudioElement>(null);
   const preloadRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -549,7 +551,7 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
           whileTap={{ scale: 0.9 }}
           onClick={() => skip(-15)}
           className="p-3 rounded-full hover:bg-surface-container-high transition-colors"
-          aria-label="Skip back 15 seconds"
+          aria-label={t("audio.skipBack")}
         >
           <SkipBack className="w-5 h-5 text-on-surface" />
           <span className="sr-only">-15s</span>
@@ -563,7 +565,7 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
           className={`w-16 h-16 rounded-full flex items-center justify-center
             transition-shadow disabled:opacity-50
             ${isPlaying ? "secondary-gradient glow-play" : "secondary-gradient glow-secondary"}`}
-          aria-label={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? t("audio.pause") : t("audio.play")}
         >
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -602,7 +604,7 @@ export function AudioPlayer({ documentId, title, totalDuration, documentStatus, 
           whileTap={{ scale: 0.9 }}
           onClick={() => skip(15)}
           className="p-3 rounded-full hover:bg-surface-container-high transition-colors"
-          aria-label="Skip forward 15 seconds"
+          aria-label={t("audio.skipForward")}
         >
           <SkipForward className="w-5 h-5 text-on-surface" />
           <span className="sr-only">+15s</span>

@@ -15,4 +15,4 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["*.trycloudflare.com", "frame-wins-cancel-ghz.trycloudflare.com"],
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

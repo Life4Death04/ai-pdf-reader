@@ -1,0 +1,51 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "search": "Search"
+  },
+  "header": {
+    "appName": "Auralis",
+    "appDescription": "PDF to Audio"
+  },
+  "sidebar": {
+    "library": "Library",
+    "recent": "Recent",
+    "uploadPdf": "Upload PDF"
+  },
+  "dashboard": {
+    "title": "Your Library",
+    "subtitle": "in your collection",
+    "allDocuments": "All Documents",
+    "continueListening": "Continue Listening",
+    "processing": "Processing",
+    "emptyState": "Your library is empty",
+    "uploadFirstPdf": "Upload your first PDF",
+    "searchPlaceholder": "Search...",
+    "noMatches": "No documents match your search",
+    "documentCount": "{count, plural, one {document} other {documents}}"
+  },
+  "upload": {
+    "uploading": "Uploading...",
+    "complete": "Upload Complete",
+    "processing": "Processing your document...",
+    "dropHint": "Drop your PDF",
+    "addLibrary": "Add to Library",
+    "clickBrowse": "Drop a PDF or click to browse",
+    "aiRewrite": "Auto-Rewrite with AI"
+  },
+  "document": {
+    "resumeSession": "Resume Session",
+    "pages": "pages",
+    "rewriteAi": "Rewrite with AI",
+    "deleteDocument": "Delete document"
+  },
+  "audio": {
+    "play": "Play",
+    "pause": "Pause",
+    "skipBack": "Skip back 15 seconds",
+    "skipForward": "Skip forward 15 seconds"
+  }
+}
