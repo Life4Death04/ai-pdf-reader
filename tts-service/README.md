@@ -30,6 +30,20 @@ The default Spanish model is `es_MX-claude-high`. The server can also load `en_U
 
 If Bash reports `/tts-service/venv/bin/python: No such file or directory`, the command was run with a leading `/`. Use `./tts-service/venv/bin/python` from the repository root, or recreate the virtualenv with the setup commands above.
 
+## Docker
+
+Build the image from the repository root. The build context must be the root directory because the Piper voice models are stored beside the application code:
+
+```bash
+docker build -f tts-service/Dockerfile -t ai-pdf-reader-tts:local .
+```
+
+Run the service locally:
+
+```bash
+docker run --rm -p 5050:5050 ai-pdf-reader-tts:local
+```
+
 ## Quick Check
 
 ```bash
